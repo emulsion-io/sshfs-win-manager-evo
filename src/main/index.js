@@ -191,13 +191,15 @@ if (isSecondInstance) {
   app.on('ready', () => {
     mainWindow = createAppWindow('main-window', '', {
       title: 'SSHFS-Win Manager Evo',
-      height: 500,
-      width: 900,
+      height: 760,
+      width: 1280,
+      minHeight: 650,
+      minWidth: 1100,
       useContentSize: true,
       frame: false,
-      maximizable: false,
+      maximizable: true,
       minimizable: false,
-      resizable: false
+      resizable: true
     })
 
     if (!process.argv.includes('--systray')) {

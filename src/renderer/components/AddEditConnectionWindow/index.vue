@@ -62,7 +62,6 @@
           <div class="form-item">
             <label>Drive letter</label>
             <select v-model="conn.mountPoint">
-              <option value="auto">Auto</option>
               <option v-for="drive in drives" :value="drive + ':'" :key="drive">{{drive}}:</option>
             </select>
           </div>
@@ -162,7 +161,7 @@ export default {
         password: '',
         keyFile: process.env.USERPROFILE + '\\.ssh\\id_rsa',
         key: '',
-        mountPoint: 'auto',
+        mountPoint: 'D:',
         status: 'disconnected',
         pid: 0,
         advanced: {
@@ -189,20 +188,53 @@ export default {
 
 <style lang="less" scoped>
 .wrap  {
+  height: 100%;
+  padding: 15px 20px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  :deep(.tabs-container) {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  :deep(.tabs-selector) {
+    flex: 0 0 auto;
+  }
+
+  :deep(.tab) {
+    min-height: 0;
+    flex: 1;
+    overflow: auto;
+    padding-right: 5px;
+    padding-bottom: 12px;
+  }
+
   .advanced-tab {
     overflow: auto;
-    height: 610px;
+    height: auto;
     width: 100%;
     padding-right: 5px;
   }
 
   .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 15px;
-    text-align: right;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 14px 0 15px;
+    border-top: 1px solid var(--app-border);
+    background: var(--app-surface);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+
+    .btn {
+      margin-bottom: 0;
+    }
   }
 }
 </style>

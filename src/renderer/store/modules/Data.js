@@ -65,6 +65,10 @@ const mutations = {
       if (!conn.preferredMountPoint) {
         conn.preferredMountPoint = null
       }
+
+      if (typeof conn.favorite !== 'boolean') {
+        conn.favorite = false
+      }
     })
   }
 }

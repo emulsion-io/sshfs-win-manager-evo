@@ -23,7 +23,7 @@ class ProcessHandlerWin {
       }
 
       let cmdArgs = [
-        `${conn.user}@${conn.host}:${conn.folder}`,
+        `${conn.user}@${this.getRemoteHost(conn.host)}:${conn.folder}`,
         mountPoint,
         `-p${conn.port}`,
         `-ovolname=${conn.name.substr(0, 32)}`,
@@ -149,6 +149,24 @@ class ProcessHandlerWin {
         reject(new Error(lastDebugMessage))
       })
     })
+  }
+
+  getRemoteHost (host) {
+    if (!host) {
+      return ''
+    }
+
+    const sanitizedHost = String(host).trim()
+
+    if (sanitizedHost.startsWith('[') && sanitizedHost.endsWith(']')) {
+      return sanitizedHost
+    }
+
+    if (sanitizedHost.includes(':')) {
+      return `[${sanitizedHost}]`
+    }
+
+    return sanitizedHost
   }
 
   terminate (pid) {
