@@ -26,17 +26,49 @@
           <div class="form-item">
             <label>Authentication method</label>
             <select v-model="conn.authType" @change="authTypeChange">
+              <option value="key-file">Private Key</option>
+              <option value="key-file-passphrase">Private Key + Passphrase</option>
+              <option value="key-file-interactive">Private Key + PAM/OTP</option>
+              <option value="key-file-passphrase-interactive">Private Key + Passphrase + PAM/OTP</option>
               <option value="password">Password</option>
               <option value="password-ask">Password (ask on connect)</option>
-              <option value="key-file">Private Key (file)</option>
+              <option value="interactive">PAM/OTP only (no key) [BETA]</option>
               <!-- <option value="key-input" disabled>Private Key (input)</option> -->
             </select>
+            <p class="auth-hint" v-if="conn.authType === 'interactive'">
+              <Icon icon="info"/>
+              <span>
+                Mode BETA pour les authentifications clavier-interactives sans clé privée (PAM, OTP, SSO challenge).<br />
+                Le système demandera une information de validation au moment de la connexion (mot de passe temporaire, code, etc.).
+              </span>
+            </p>
+            <p class="auth-hint" v-if="conn.authType === 'key-file-passphrase'">
+              <Icon icon="info"/>
+              <span>
+                Mode BETA: la passphrase de la clé privée sera demandée au démarrage de la connexion.<br />
+                La passphrase n’est pas sauvegardée dans la configuration.
+              </span>
+            </p>
+            <p class="auth-hint" v-if="conn.authType === 'key-file-interactive'">
+              <Icon icon="info"/>
+              <span>
+                Mode BETA pour les serveurs qui demandent une clé privée puis un challenge PAM/OTP.<br />
+                Le code de vérification et le mot de passe seront demandés à la connexion.
+              </span>
+            </p>
+            <p class="auth-hint" v-if="conn.authType === 'key-file-passphrase-interactive'">
+              <Icon icon="info"/>
+              <span>
+                Mode BETA pour les clés privées protégées par passphrase suivies d’un challenge PAM/OTP.<br />
+                La passphrase, le code de vérification et le mot de passe seront demandés à la connexion.
+              </span>
+            </p>
           </div>
           <div v-show="conn.authType === 'password'" class="form-item">
             <label>Password</label>
             <input type="password" v-model="conn.password">
           </div>
-          <div v-show="conn.authType === 'key-file'" class="form-row">
+          <div v-show="conn.authType === 'key-file' || conn.authType === 'key-file-passphrase' || conn.authType === 'key-file-interactive' || conn.authType === 'key-file-passphrase-interactive'" class="form-row">
             <div class="form-item">
               <label>Key File</label>
               <input type="text" placeholder="eg. C:\Users\me\.ssh\id_rsa" v-model="conn.keyFile">
@@ -235,6 +267,28 @@ export default {
     .btn {
       margin-bottom: 0;
     }
+  }
+
+  .auth-hint {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    border: 1px dashed var(--app-border);
+    border-radius: 8px;
+    color: var(--app-muted);
+    background: color-mix(in srgb, var(--app-primary) 14%, transparent);
+    font-size: 12px;
+    line-height: 1.35;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .auth-hint svg {
+    width: 15px;
+    height: 15px;
+    fill: var(--app-primary);
+    flex: 0 0 15px;
+    margin-top: 2px;
   }
 }
 </style>

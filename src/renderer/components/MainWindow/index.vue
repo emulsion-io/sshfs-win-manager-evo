@@ -142,7 +142,9 @@
                     v-else
                     type="button"
                     class="round-action"
-                    v-tooltip="'Connecter'"
+                    :class="{ loading: conn.status === 'connecting' }"
+                    :disabled="conn.status === 'connecting' || conn.status === 'disconnecting'"
+                    v-tooltip="conn.status === 'connecting' ? 'Connexion...' : 'Connecter'"
                     @click.stop="connect(conn)"
                   >
                     <Icon icon="plugDisconnected"/>
@@ -256,31 +258,36 @@
             </span>
 
             <div class="detail-title">
-              <div>
+              <div class="detail-title-main">
                 <h1>{{ selectedConnection.name }}</h1>
                 <span class="status-pill" :class="selectedConnection.status">
                   <span class="status-dot"></span>
                   {{ statusLabel(selectedConnection) }}
                 </span>
-                <button type="button" class="icon-button" v-tooltip="'Editer'" @click="editConnection(selectedConnection)">
-                  <Icon icon="pen"/>
-                </button>
-                <button
-                  type="button"
-                  class="icon-button favorite"
-                  :class="{ active: selectedConnection.favorite }"
-                  v-tooltip="selectedConnection.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
-                  @click="toggleFavorite(selectedConnection)"
-                >
-                  <Icon icon="star"/>
-                </button>
               </div>
-              <p>
-                <b>{{ mountPointLabel(selectedConnection) }}</b>
-                {{ selectedConnection.host }}
-                <i>&middot;</i>
-                {{ selectedConnection.folder || '/' }}
-              </p>
+              <div class="detail-title-meta">
+                <p>
+                  <b>{{ mountPointLabel(selectedConnection) }}</b>
+                  {{ selectedConnection.host }}
+                  <i>&middot;</i>
+                  {{ selectedConnection.folder || '/' }}
+                </p>
+
+                <div class="detail-title-actions">
+                  <button type="button" class="icon-button" v-tooltip="'Editer'" @click="editConnection(selectedConnection)">
+                    <Icon icon="pen"/>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button favorite"
+                    :class="{ active: selectedConnection.favorite }"
+                    v-tooltip="selectedConnection.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                    @click="toggleFavorite(selectedConnection)"
+                  >
+                    <Icon icon="star"/>
+                  </button>
+                </div>
+              </div>
             </div>
           </header>
 
@@ -330,11 +337,13 @@
               <button
                 v-else
                 class="action-button primary"
+                :class="{ loading: selectedConnection.status === 'connecting' }"
+                :disabled="selectedConnection.status === 'connecting' || selectedConnection.status === 'disconnecting'"
                 type="button"
                 @click="connect(selectedConnection)"
               >
                 <Icon icon="plugDisconnected"/>
-                Connecter
+                {{ selectedConnection.status === 'connecting' ? 'Connexion...' : 'Connecter' }}
               </button>
               <button class="action-button" type="button" @click="editConnection(selectedConnection)">
                 <Icon icon="pen"/>
@@ -596,6 +605,10 @@ export default {
 
     selectConnection (conn) {
       this.selectedConnectionUuid = conn.uuid
+
+      if (this.activeSection === 'settings' || this.activeSection === 'about') {
+        this.activeSection = 'connections'
+      }
     },
 
     toggleDeleteMode () {
@@ -608,32 +621,62 @@ export default {
 
     connect (conn) {
       return new Promise(resolve => {
-        conn.status = 'connecting'
+        this.$store.dispatch('UPDATE_CONNECTION_STATUS', {
+          uuid: conn.uuid,
+          status: 'connecting'
+        })
 
         const connect = c => {
           ProcessManager.create(c).then(pid => {
-            conn.pid = pid
-            conn.status = 'connected'
-            this.selectConnection(conn)
+            console.log(`{${conn.uuid}}`, 'status:', 'ui connected', pid)
 
-            this.updateConnectionList()
+            this.$store.dispatch('UPDATE_CONNECTION_STATUS', {
+              uuid: conn.uuid,
+              pid,
+              status: 'connected'
+            })
+
+            this.selectConnection(conn)
             resolve()
           }).catch(error => {
-            conn.status = 'disconnected'
-
-            this.updateConnectionList()
+            this.$store.dispatch('UPDATE_CONNECTION_STATUS', {
+              uuid: conn.uuid,
+              pid: null,
+              status: 'disconnected'
+            })
 
             this.notify(`Can't connect to '${conn.name}': ${error}`, 'error-icon')
             resolve()
           })
         }
 
-        if (conn.authType === 'password-ask') {
+        if (conn.authType === 'password-ask' || conn.authType === 'interactive' || conn.authType === 'key-file-passphrase' || conn.authType === 'key-file-interactive' || conn.authType === 'key-file-passphrase-interactive') {
+          ipcRenderer.once('password-prompt:response', (event, data) => {
+            switch (data.message) {
+              case 'connection-password':
+                connect({
+                  ...conn,
+                  password: data.password,
+                  interactiveResponses: data.interactiveResponses || []
+                })
+                break
+
+              case 'connection-password-cancel':
+                this.$store.dispatch('UPDATE_CONNECTION_STATUS', {
+                  uuid: conn.uuid,
+                  pid: null,
+                  status: 'disconnected'
+                })
+                resolve()
+                break
+            }
+          })
+
           ipcRenderer.invoke('window:open', {
             name: 'password-prompt-window',
             route: `#/password-prompt/${conn.uuid}`,
             options: {
-              height: 190,
+              height: conn.authType === 'key-file-passphrase-interactive' ? 360 : (conn.authType === 'key-file-interactive' || conn.authType === 'interactive' ? 270 : 210),
               width: 350,
               useContentSize: true,
               frame: false,
@@ -641,20 +684,6 @@ export default {
               minimizable: false,
               resizable: false,
               modal: true
-            }
-          })
-
-          ipcRenderer.once('password-prompt:response', (event, data) => {
-            switch (data.message) {
-              case 'connection-password':
-                connect(data.conn)
-                break
-
-              case 'connection-password-cancel':
-                conn.status = 'disconnected'
-                this.updateConnectionList()
-                resolve()
-                break
             }
           })
         } else {
@@ -966,13 +995,11 @@ export default {
       if (this.appSettings.showDebugPanel) {
         const data = args.join(' ').trim()
 
-        if (!data.match(/\[?\d{5}\]?/gm)) {
-          this.debugOutput += '\n' + data
+        this.debugOutput += '\n' + data
 
-          this.$nextTick().then(() => {
-            this.$refs.debugOutput.scrollTop = this.$refs.debugOutput.scrollHeight
-          })
-        }
+        this.$nextTick().then(() => {
+          this.$refs.debugOutput.scrollTop = this.$refs.debugOutput.scrollHeight
+        })
       }
 
       originalConsoleLog(...args)
@@ -1372,6 +1399,10 @@ export default {
   background: #f7b731;
 }
 
+.connection-state.connecting {
+  animation: status-pulse 1s ease-in-out infinite;
+}
+
 .reorder-actions {
   display: inline-flex;
   gap: 4px;
@@ -1424,6 +1455,13 @@ export default {
 .round-action:disabled {
   opacity: 0.38;
   cursor: not-allowed;
+}
+
+.round-action.loading {
+  color: #ffffff;
+  background: #f7b731;
+  opacity: 1;
+  animation: action-pulse 1s ease-in-out infinite;
 }
 
 .round-action.primary,
@@ -1709,11 +1747,21 @@ export default {
   flex: 1;
 }
 
-.detail-title > div {
+.detail-title-main,
+.detail-title-actions {
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.detail-title-main {
+  align-items: flex-start;
+}
+
+.detail-title-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
 }
 
 .detail-title h1 {
@@ -1726,8 +1774,18 @@ export default {
 }
 
 .detail-title p {
-  margin: 10px 0 0;
+  min-width: 0;
+  margin: 0;
   font-size: 13px;
+}
+
+.detail-title-meta {
+  min-width: 0;
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
 }
 
 .status-pill {
@@ -1759,6 +1817,39 @@ export default {
   box-shadow: 0 0 14px color-mix(in srgb, var(--app-success) 60%, transparent);
 }
 
+.status-pill.connecting {
+  color: #f7b731;
+  background: color-mix(in srgb, #f7b731 14%, transparent);
+  border-color: color-mix(in srgb, #f7b731 35%, transparent);
+}
+
+.status-pill.connecting .status-dot {
+  background: #f7b731;
+  animation: status-pulse 1s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    transform: scale(0.82);
+    box-shadow: 0 0 0 0 rgba(247, 183, 49, 0.45);
+  }
+
+  50% {
+    transform: scale(1.14);
+    box-shadow: 0 0 0 6px rgba(247, 183, 49, 0);
+  }
+}
+
+@keyframes action-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(247, 183, 49, 0.35);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(247, 183, 49, 0);
+  }
+}
+
 .icon-button {
   width: 34px;
   height: 34px;
@@ -1770,23 +1861,28 @@ export default {
   flex: 1;
   padding: 20px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(320px, 1fr) minmax(260px, 300px);
   gap: 18px;
   overflow: auto;
 }
 
 .info-panel,
 .actions-panel {
+  min-width: 0;
   border-radius: 9px;
   padding: 16px;
+}
+
+.info-panel {
+  min-width: 320px;
 }
 
 .info-row {
   min-height: 48px;
   border-bottom: 1px solid var(--app-border);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(92px, 0.75fr) minmax(120px, 1.25fr);
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
@@ -1801,7 +1897,10 @@ export default {
 .info-row strong {
   color: var(--app-text);
   text-align: right;
-  overflow-wrap: anywhere;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .actions-panel {
@@ -1829,6 +1928,10 @@ export default {
 
 .action-button.danger {
   color: var(--app-danger);
+}
+
+.action-button.loading {
+  animation: action-pulse 1s ease-in-out infinite;
 }
 
 .action-button:disabled {

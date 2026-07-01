@@ -1,7 +1,8 @@
 import { exec, spawn } from 'child_process'
 
-import { dirname } from 'path'
-import { existsSync as fileExistsSync } from 'fs'
+import { dirname, join } from 'path'
+import { existsSync as fileExistsSync, unlinkSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
 
 class ProcessHandlerWin {
   constructor (settings) {
@@ -81,9 +82,41 @@ class ProcessHandlerWin {
         cmdArgs.push('-opassword_stdin')
       }
 
+      if (conn.authType === 'interactive') {
+        cmdArgs.push('-oPreferredAuthentications=keyboard-interactive')
+        cmdArgs.push('-oPasswordAuthentication=no')
+        cmdArgs.push('-oKbdInteractiveAuthentication=yes')
+        cmdArgs.push('-oChallengeResponseAuthentication=yes')
+        cmdArgs.push('-oBatchMode=no')
+      }
+
       if (conn.authType === 'key-file') {
         cmdArgs.push('-oPreferredAuthentications=publickey')
         cmdArgs.push(`-oIdentityFile="${conn.keyFile.replace(/\\/g, '/')}"`)
+      }
+
+      if (conn.authType === 'key-file-passphrase') {
+        cmdArgs.push('-oPreferredAuthentications=publickey')
+        cmdArgs.push(`-oIdentityFile="${conn.keyFile.replace(/\\/g, '/')}"`)
+        cmdArgs.push('-oBatchMode=no')
+      }
+
+      if (conn.authType === 'key-file-interactive') {
+        cmdArgs.push('-oPreferredAuthentications=publickey\\,keyboard-interactive')
+        cmdArgs.push('-oPasswordAuthentication=no')
+        cmdArgs.push('-oKbdInteractiveAuthentication=yes')
+        cmdArgs.push('-oChallengeResponseAuthentication=yes')
+        cmdArgs.push(`-oIdentityFile="${conn.keyFile.replace(/\\/g, '/')}"`)
+        cmdArgs.push('-oBatchMode=no')
+      }
+
+      if (conn.authType === 'key-file-passphrase-interactive') {
+        cmdArgs.push('-oPreferredAuthentications=publickey\\,keyboard-interactive')
+        cmdArgs.push('-oPasswordAuthentication=no')
+        cmdArgs.push('-oKbdInteractiveAuthentication=yes')
+        cmdArgs.push('-oChallengeResponseAuthentication=yes')
+        cmdArgs.push(`-oIdentityFile="${conn.keyFile.replace(/\\/g, '/')}"`)
+        cmdArgs.push('-oBatchMode=no')
       }
 
       console.log('-'.repeat(80))
@@ -92,39 +125,64 @@ class ProcessHandlerWin {
       console.log('conntype:', conn.authType)
       console.log('cmd:', `"${this.settings.sshfsBinary}" ${cmdArgs.join(' ')}`)
 
-      const process = spawn(this.settings.sshfsBinary, cmdArgs, {
+      const askpass = this.createAskpassScript(conn)
+
+      const childProcess = spawn(this.settings.sshfsBinary, cmdArgs, {
         env: {
-          PATH: dirname(this.settings.sshfsBinary)
+          ...globalThis.process.env,
+          PATH: `${dirname(this.settings.sshfsBinary)};${globalThis.process.env.PATH || ''}`,
+          ...(askpass
+            ? {
+              DISPLAY: 'sshfs-win-manager',
+              SSH_ASKPASS: askpass.scriptPath,
+              SSH_ASKPASS_REQUIRE: 'force',
+              SSHFS_WIN_ASKPASS_STATE: askpass.statePath,
+              ...this.getAskpassResponseEnv(conn)
+            }
+            : {})
         }
       })
 
       if (conn.authType === 'password' || conn.authType === 'password-ask') {
-        process.stdin.write(conn.password + '\n')
+        childProcess.stdin.write(conn.password + '\n')
       }
-
-      process.stdout.on('data', data => {
-        console.log(`{${conn.uuid}} stdout:`, data.toString())
-      })
 
       let debugOutput = ''
       let lastDebugMessage = ''
+      let connectionFinalized = false
 
-      process.stderr.on('data', data => {
+      childProcess.stdout.on('data', data => {
+        if (!connectionFinalized) {
+          console.log(`{${conn.uuid}} stdout:`, data.toString())
+        }
+      })
+
+      childProcess.stderr.on('data', data => {
         data = data.toString().trim()
 
-        console.log(`{${conn.uuid}} stderr:`, data)
+        const visibleDebugOutput = this.getVisibleDebugOutput(data)
+
+        if (!connectionFinalized && visibleDebugOutput) {
+          console.log(`{${conn.uuid}} stderr:`, visibleDebugOutput)
+        }
 
         debugOutput += data
         debugOutput = debugOutput.substr(-512)
         lastDebugMessage = data
 
-        if (data.includes('service sshfs has been started')) {
-          resolve(process)
+        if (this.isConnectionStartedMessage(debugOutput)) {
+          connectionFinalized = true
+          console.log(`{${conn.uuid}}`, 'status:', 'sshfs started')
+          resolve(childProcess)
         }
       })
 
-      process.on('close', exitCode => {
-        console.log(`{${conn.uuid}}`, 'exit:', exitCode)
+      childProcess.on('close', exitCode => {
+        if (!connectionFinalized) {
+          console.log(`{${conn.uuid}}`, 'exit:', exitCode)
+        }
+
+        connectionFinalized = true
 
         if (debugOutput.includes('no such identity')) {
           reject(new Error('Private key not found: ' + conn.keyFile))
@@ -135,20 +193,107 @@ class ProcessHandlerWin {
         }
 
         if (debugOutput.includes('Permission denied')) {
-          if (conn.authType === 'key-file') {
-            reject(new Error('Invalid user name'))
+          if (conn.authType === 'key-file' || conn.authType === 'key-file-passphrase' || conn.authType === 'key-file-interactive' || conn.authType === 'key-file-passphrase-interactive') {
+            reject(new Error('Invalid user name, private key or key passphrase'))
           } else {
             reject(new Error('Invalid user name or password'))
           }
         }
 
-        if (debugOutput.includes('Permission denied')) {
+        if (debugOutput.includes('Permission denied') && conn.authType !== 'key-file' && conn.authType !== 'key-file-passphrase' && conn.authType !== 'key-file-interactive' && conn.authType !== 'key-file-passphrase-interactive') {
           reject(new Error('Invalid user name or password'))
         }
 
         reject(new Error(lastDebugMessage))
       })
+
+      childProcess.on('close', () => {
+        if (askpass) {
+          askpass.paths.forEach(filePath => {
+            try {
+              unlinkSync(filePath)
+            } catch {}
+          })
+        }
+      })
     })
+  }
+
+  createAskpassScript (conn) {
+    if (conn.authType !== 'interactive' && conn.authType !== 'key-file-passphrase' && conn.authType !== 'key-file-interactive' && conn.authType !== 'key-file-passphrase-interactive') {
+      return null
+    }
+
+    const scriptPath = join(tmpdir(), `sshfs-win-manager-askpass-${conn.uuid}.cmd`)
+    const psScriptPath = join(tmpdir(), `sshfs-win-manager-askpass-${conn.uuid}.ps1`)
+    const statePath = join(tmpdir(), `sshfs-win-manager-askpass-${conn.uuid}.state`)
+
+    writeFileSync(
+      scriptPath,
+      `@echo off\r\npowershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${psScriptPath}"\r\n`,
+      'utf8'
+    )
+
+    writeFileSync(
+      psScriptPath,
+      [
+        '$statePath = $env:SSHFS_WIN_ASKPASS_STATE',
+        '$index = 0',
+        'if ($statePath -and (Test-Path $statePath)) {',
+        '  $raw = Get-Content -Path $statePath -ErrorAction SilentlyContinue',
+        '  if ($raw -match "^\\d+$") { $index = [int]$raw }',
+        '}',
+        '$responses = @($env:SSHFS_WIN_ASKPASS_RESPONSE_0, $env:SSHFS_WIN_ASKPASS_RESPONSE_1, $env:SSHFS_WIN_ASKPASS_RESPONSE_2)',
+        '$responseCount = [int]($env:SSHFS_WIN_ASKPASS_RESPONSE_COUNT)',
+        'if ($responseCount -le 0) { exit 0 }',
+        'if ($index -ge $responseCount) { $index = $responseCount - 1 }',
+        '[Console]::Out.Write($responses[$index])',
+        'if ($statePath) { Set-Content -Path $statePath -Value ($index + 1) -NoNewline }'
+      ].join('\r\n'),
+      'utf8'
+    )
+
+    writeFileSync(statePath, '0', 'utf8')
+
+    return {
+      scriptPath,
+      statePath,
+      paths: [scriptPath, psScriptPath, statePath]
+    }
+  }
+
+  getAskpassResponseEnv (conn) {
+    const responses = conn.authType === 'interactive' || conn.authType === 'key-file-interactive' || conn.authType === 'key-file-passphrase-interactive'
+      ? conn.interactiveResponses || []
+      : [conn.password || '']
+
+    return responses.reduce((env, response, index) => {
+      env[`SSHFS_WIN_ASKPASS_RESPONSE_${index}`] = response || ''
+      env.SSHFS_WIN_ASKPASS_RESPONSE_COUNT = String(responses.length)
+      return env
+    }, {})
+  }
+
+  isConnectionStartedMessage (data) {
+    const output = String(data).toLowerCase()
+
+    return output.includes('service sshfs has been started') ||
+      (
+        output.includes('authentication succeeded') &&
+        (output.includes('remote_uid =') || output.includes('server version:'))
+      )
+  }
+
+  getVisibleDebugOutput (data) {
+    return String(data)
+      .split(/\r?\n/)
+      .filter(line => !this.isNoisySftpDebugLine(line))
+      .join('\n')
+      .trim()
+  }
+
+  isNoisySftpDebugLine (line) {
+    return /^\[\d+\]\s+(stat|attrs|close|status)\b/i.test(String(line).trim())
   }
 
   getRemoteHost (host) {

@@ -1,15 +1,28 @@
 <template>
-  <Window :title="`Password for ${conn.user}@${conn.host}`" @close="cancel">
-    <div class="wrap">
+  <Window :title="promptTitle" @close="cancel">
+    <div v-if="conn" class="wrap">
+      <div v-if="isKeyPassphraseInteractive" class="form-item">
+        <label>Key passphrase</label>
+        <input type="password" autofocus v-model="keyPassphrase" @keydown.enter="ok" @keydown.esc="cancel">
+      </div>
+
+      <div v-if="isInteractiveResponseMode" class="form-item">
+        <label>Verification code</label>
+        <input type="text" :autofocus="!isKeyPassphraseInteractive" v-model="verificationCode" @keydown.enter="ok" @keydown.esc="cancel">
+      </div>
+
       <div class="form-item">
-        <label>Password</label>
-        <input type="password" autofocus v-model="password" @keydown.enter="ok" @keydown.esc="cancel">
+        <label>{{ promptLabel }}</label>
+        <input type="password" :autofocus="!isInteractiveResponseMode" v-model="password" @keydown.enter="ok" @keydown.esc="cancel">
       </div>
 
       <div class="footer">
         <button class="btn" @click="cancel">Cancel</button>
         <button class="btn default" @click="ok">OK</button>
       </div>
+    </div>
+    <div v-else class="wrap loading">
+      Loading...
     </div>
   </Window>
 </template>
@@ -26,32 +39,101 @@ export default {
     Window
   },
 
+  data () {
+    return {
+      password: '',
+      keyPassphrase: '',
+      verificationCode: '',
+      conn: null
+    }
+  },
+
+  computed: {
+    isKeyInteractive () {
+      return this.conn && this.conn.authType === 'key-file-interactive'
+    },
+
+    isKeyPassphraseInteractive () {
+      return this.conn && this.conn.authType === 'key-file-passphrase-interactive'
+    },
+
+    isKeyInteractiveMode () {
+      return this.isKeyInteractive || this.isKeyPassphraseInteractive
+    },
+
+    isInteractiveOnly () {
+      return this.conn && this.conn.authType === 'interactive'
+    },
+
+    isInteractiveResponseMode () {
+      return this.isInteractiveOnly || this.isKeyInteractiveMode
+    },
+
+    promptLabel () {
+      if (!this.conn) {
+        return 'Password'
+      }
+
+      if (this.conn.authType === 'key-file-passphrase') {
+        return 'Passphrase'
+      }
+
+      return this.isInteractiveOnly
+        ? 'Password (optional)'
+        : 'Password'
+    },
+
+    promptTitle () {
+      if (!this.conn) {
+        return this.promptLabel
+      }
+
+      return this.isInteractiveResponseMode
+        ? `PAM/OTP for ${this.conn.user}@${this.conn.host}`
+        : `${this.promptLabel} for ${this.conn.user}@${this.conn.host}`
+    }
+  },
+
   methods: {
     cancel () {
       ipcRenderer.send('password-prompt:response', {
         message: 'connection-password-cancel',
-        conn: this.conn
+        uuid: this.conn && this.conn.uuid
       })
 
       ipcRenderer.send('window:close-current')
     },
 
     ok () {
-      this.conn.password = this.password
+      const conn = JSON.parse(JSON.stringify(this.conn))
+      conn.password = this.password
+      conn.interactiveResponses = this.getInteractiveResponses()
 
       ipcRenderer.send('password-prompt:response', {
         message: 'connection-password',
-        conn: this.conn
+        uuid: conn.uuid,
+        password: this.password,
+        interactiveResponses: conn.interactiveResponses,
+        conn
       })
 
       ipcRenderer.send('window:close-current')
-    }
-  },
+    },
 
-  data () {
-    return {
-      password: '',
-      conn: null
+    getInteractiveResponses () {
+      if (this.isKeyPassphraseInteractive) {
+        return [this.keyPassphrase, this.verificationCode, this.password]
+      }
+
+      if (this.isKeyInteractive) {
+        return [this.verificationCode, this.password]
+      }
+
+      if (this.isInteractiveOnly) {
+        return [this.verificationCode, this.password]
+      }
+
+      return []
     }
   },
 
@@ -63,15 +145,26 @@ export default {
 
 <style lang="less" scoped>
 .wrap {
-  padding: 15px 20px;
+  height: 100%;
+  padding: 15px 20px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 
   .footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 15px;
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding: 15px 0;
     text-align: right;
+
+    .btn + .btn {
+      margin-left: 10px;
+    }
+  }
+
+  &.loading {
+    color: var(--app-muted);
   }
 }
 </style>

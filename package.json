@@ -1,9 +1,9 @@
 {
   "name": "sshfs-win-manager-evo",
-  "version": "1.3.1",
-  "author": "Evandro Araujo <evandroprogram@gmail.com>",
+  "version": "2.0.0",
+  "author": "Fabrice Simonet <fabrice@emulsion.io>",
   "contributors": [
-    "Fabrice Simonet"
+    "Evandro Araujo <evandroprogram@gmail.com>"
   ],
   "description": "A GUI for SSHFS-Win (https://github.com/billziss-gh/sshfs-win)",
   "license": "MIT",
