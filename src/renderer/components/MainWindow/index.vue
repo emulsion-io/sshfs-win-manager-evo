@@ -76,7 +76,8 @@
             @drop="dropConnection(conn.uuid)"
           >
             <span class="connection-icon">
-              <Icon icon="cloudDrive"/>
+              <img v-if="conn.iconDataUrl" :src="conn.iconDataUrl" :alt="conn.name">
+              <Icon v-else icon="cloudDrive"/>
             </span>
 
             <span class="connection-main">
@@ -230,13 +231,15 @@
           <header class="workspace-header">
             <div>
               <h1>SSHFS-Win Manager Evo</h1>
-              <p>Version {{ appVersion }} - modifications Evo par Fabrice Simonet.</p>
+              <p>Version {{ appVersion }} - edition Evo par Fabrice Simonet.</p>
             </div>
           </header>
 
           <div class="about-content">
-            <p>Base sur le projet original SSHFS-Win Manager de Evandro Araujo.</p>
-            <p>Licence MIT. Cette version conserve les credits du projet original et ajoute les modifications Evo.</p>
+            <p>Cette edition est maintenue par Fabrice Simonet.</p>
+            <p>Site web: <button class="text-link" type="button" @click="openExternal('https://emulsion.io')">emulsion.io</button></p>
+            <p>Base sur le projet original SSHFS-Win Manager cree par Evandro Araujo.</p>
+            <p>Licence MIT. Les notices de copyright et de licence du projet original sont conservees.</p>
 
             <h2>Bibliotheques principales</h2>
             <div class="library-grid">
@@ -253,8 +256,20 @@
 
         <div v-else-if="selectedConnection" class="detail-card">
           <header class="detail-header">
-            <span class="detail-icon">
-              <Icon icon="cloudDrive"/>
+            <span class="detail-icon-wrap">
+              <button class="detail-icon" type="button" v-tooltip="'Changer le logo'" @click="selectConnectionIcon(selectedConnection)">
+                <img v-if="selectedConnection.iconDataUrl" :src="selectedConnection.iconDataUrl" :alt="selectedConnection.name">
+                <Icon v-else icon="cloudDrive"/>
+              </button>
+              <button
+                v-if="selectedConnection.iconDataUrl"
+                class="detail-icon-remove"
+                type="button"
+                v-tooltip="'Retirer le logo'"
+                @click="removeConnectionIcon(selectedConnection)"
+              >
+                ×
+              </button>
             </span>
 
             <div class="detail-title">
@@ -463,6 +478,26 @@ export default {
     toggleFavorite (conn) {
       conn.favorite = !conn.favorite
       this.$store.dispatch('UPDATE_CONNECTION', conn)
+    },
+
+    async selectConnectionIcon (conn) {
+      const iconDataUrl = await ipcRenderer.invoke('dialog:select-connection-icon')
+
+      if (!iconDataUrl) {
+        return
+      }
+
+      this.$store.dispatch('UPDATE_CONNECTION', {
+        ...conn,
+        iconDataUrl
+      })
+    },
+
+    removeConnectionIcon (conn) {
+      this.$store.dispatch('UPDATE_CONNECTION', {
+        ...conn,
+        iconDataUrl: null
+      })
     },
 
     previewTheme (theme) {
@@ -1325,6 +1360,15 @@ export default {
   width: 46px;
   height: 46px;
   border-radius: 10px;
+  overflow: hidden;
+}
+
+.connection-icon img,
+.detail-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .connection-main {
@@ -1699,6 +1743,19 @@ export default {
   color: var(--app-muted);
 }
 
+.text-link {
+  border: 0;
+  padding: 0;
+  color: var(--app-primary);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
 .about-content h2 {
   margin: 24px 0 12px;
   color: var(--app-text);
@@ -1737,9 +1794,56 @@ export default {
 .detail-icon {
   width: 72px;
   height: 72px;
+  border: 0;
   border-radius: 16px;
   color: #ffffff;
   background: linear-gradient(135deg, var(--app-primary), color-mix(in srgb, var(--app-primary) 62%, #7aa8ff));
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0;
+}
+
+.detail-icon-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.detail-icon-remove {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--app-border);
+  border-radius: 50%;
+  color: var(--app-text);
+  background: color-mix(in srgb, var(--app-bg) 88%, transparent);
+  box-shadow: var(--app-shadow);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 18px;
+  padding: 0;
+  opacity: 0;
+  transform: scale(0.86);
+  pointer-events: none;
+  transition: opacity 0.14s ease, transform 0.14s ease, background 0.14s ease;
+}
+
+.detail-icon-wrap:hover .detail-icon-remove,
+.detail-icon-wrap:focus-within .detail-icon-remove {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+.detail-icon-remove:hover {
+  color: #ffffff;
+  background: var(--app-danger);
+}
+
+.detail-icon:hover {
+  filter: brightness(1.08);
 }
 
 .detail-title {

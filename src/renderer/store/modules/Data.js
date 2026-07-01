@@ -69,6 +69,10 @@ const mutations = {
       if (typeof conn.favorite !== 'boolean') {
         conn.favorite = false
       }
+
+      if (typeof conn.iconDataUrl !== 'string') {
+        conn.iconDataUrl = null
+      }
     })
   }
 }

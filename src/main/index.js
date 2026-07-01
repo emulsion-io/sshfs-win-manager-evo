@@ -107,6 +107,29 @@ ipcMain.handle('dialog:select-private-key', async () => {
   return result.canceled ? null : result.filePaths[0]
 })
 
+ipcMain.handle('dialog:select-connection-icon', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Select connection icon',
+    properties: ['openFile'],
+    filters: [
+      { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'ico'] }
+    ]
+  })
+
+  if (result.canceled || !result.filePaths[0]) {
+    return null
+  }
+
+  const filePath = result.filePaths[0]
+  const extension = path.extname(filePath).slice(1).toLowerCase()
+  const mimeType = extension === 'jpg'
+    ? 'jpeg'
+    : extension
+  const content = await readFile(filePath)
+
+  return `data:image/${mimeType};base64,${content.toString('base64')}`
+})
+
 ipcMain.handle('app:get-version', () => app.getVersion())
 ipcMain.handle('app:get-login-item-settings', (event, settings) => app.getLoginItemSettings(settings))
 ipcMain.handle('app:set-login-item-settings', (event, settings) => app.setLoginItemSettings(settings))
