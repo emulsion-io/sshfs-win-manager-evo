@@ -1,15 +1,13 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
-import MainWindow from '@/components/MainWindow/index'
-import AddEditConnectionWindow from '@/components/AddEditConnectionWindow/index'
-import SettingsWindow from '@/components/SettingsWindow/index'
-import PasswordPromptWindow from '@/components/PasswordPromptWindow/index'
-import AboutWindow from '@/components/AboutWindow/index'
+import MainWindow from '@/components/MainWindow/index.vue'
+import AddEditConnectionWindow from '@/components/AddEditConnectionWindow/index.vue'
+import SettingsWindow from '@/components/SettingsWindow/index.vue'
+import PasswordPromptWindow from '@/components/PasswordPromptWindow/index.vue'
+import AboutWindow from '@/components/AboutWindow/index.vue'
 
-Vue.use(Router)
-
-export default new Router({
+export default createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',
@@ -42,7 +40,7 @@ export default new Router({
       component: AboutWindow
     },
     {
-      path: '*',
+      path: '/:pathMatch(.*)*',
       redirect: '/'
     }
   ]

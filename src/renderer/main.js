@@ -1,21 +1,20 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 
-import App from './App'
-import router from './router'
-import store from './store'
+import App from './App.vue'
+import router from './router/index.js'
+import store from './store/index.js'
 
-import vToolTip from 'v-tooltip'
+const app = createApp(App)
 
-if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
+app.directive('tooltip', {
+  mounted (el, binding) {
+    el.setAttribute('title', binding.value)
+  },
+  updated (el, binding) {
+    el.setAttribute('title', binding.value)
+  }
+})
 
-Vue.config.productionTip = false
-
-Vue.use(vToolTip)
-
-/* eslint-disable no-new */
-new Vue({
-  components: { App },
-  router,
-  store,
-  template: '<App/>'
-}).$mount('#app')
+app.use(router)
+app.use(store)
+app.mount('#app')

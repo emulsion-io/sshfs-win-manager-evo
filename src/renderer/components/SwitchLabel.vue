@@ -1,16 +1,14 @@
 <template>
-  <label class="switch-label">{{label}} <toggle-button :color="toggleButtonColor" v-model="_value" sync labels></toggle-button></label>
+  <label class="switch-label">
+    {{label}}
+    <input class="switch-input" type="checkbox" v-model="_value">
+    <span class="switch-ui"></span>
+  </label>
 </template>
 
 <script>
-import { ToggleButton } from 'vue-js-toggle-button'
-
 export default {
   name: 'SwitchLabel',
-
-  components: {
-    ToggleButton
-  },
 
   props: {
     label: {
@@ -18,37 +16,21 @@ export default {
       required: true,
       default: ''
     },
-    value: {
+    modelValue: {
       type: Boolean,
       required: false,
       default: false
     }
   },
 
-  methods: {
-    emitChanges () {
-      this.$emit('input', this._value)
-    }
-  },
-
   computed: {
     _value: {
       get () {
-        return this.value
+        return this.modelValue
       },
 
       set (value) {
-        console.log(value)
-        this.$emit('input', value)
-      }
-    }
-  },
-
-  data () {
-    return {
-      toggleButtonColor: {
-        checked: '#2486d8',
-        unchecked: 'rgba(255, 255, 255, 0.1)'
+        this.$emit('update:modelValue', value)
       }
     }
   }
@@ -57,12 +39,43 @@ export default {
 
 <style lang="less" scoped>
 .switch-label {
+  display: block;
   margin-top: 5px;
-  
-  .vue-js-switch {
+
+  .switch-input {
+    display: none;
+  }
+
+  .switch-ui {
     float: right;
     clear: both;
-    margin-top: -4px;
+    position: relative;
+    width: 50px;
+    height: 22px;
+    margin-top: -2px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: background 150ms;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: contrast(@main-color);
+      transition: transform 150ms;
+    }
+  }
+
+  .switch-input:checked + .switch-ui {
+    background: @primary-color;
+
+    &::after {
+      transform: translateX(28px);
+    }
   }
 }
 </style>

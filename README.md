@@ -1,16 +1,9 @@
-<p align="center">
-  <img src="https://img.shields.io/github/v/release/evsar3/sshfs-win-manager?sort=semver">
-  <img src="https://img.shields.io/github/downloads/evsar3/sshfs-win-manager/total">
-  <img src="https://img.shields.io/github/issues-raw/evsar3/sshfs-win-manager/bug?color=red">
-  <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HXZUJ8WX47238" style="margin-left: 50px; vertical-align: middle;">
-    <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" alt="Donate" title="PayPal - The safer, easier way to pay online!">
-  </a>
-</p>
-
-# SSHFS-Win Manager
+# SSHFS-Win Manager Evo
 
 ## Introduction 
-SSHFS-Win Manager is a GUI (graphics user interface) for SSHFS on Windows (comming soon for other platforms).
+SSHFS-Win Manager Evo is a GUI (graphics user interface) for SSHFS on Windows.
+
+This project is based on [SSHFS-Win Manager](https://github.com/evsar3/sshfs-win-manager) by Evandro Araujo.
 
 ## Installation
 **Step 1**  
@@ -20,7 +13,7 @@ Follow their [installation instructions](https://github.com/billziss-gh/sshfs-wi
 
 **Step 2**  
 
-Once SSHFS-Win is installed, [**download the lastest sshfs-win-manager**](https://github.com/evsar3/sshfs-win-manager/releases/latest) from the [releases](https://github.com/evsar3/sshfs-win-manager/releases) section and install it.  
+Once SSHFS-Win is installed, build or install SSHFS-Win Manager Evo and add your connections.
 
 **Step 3**  
 
@@ -58,15 +51,11 @@ Add your connections and enjoy!
 ![System tray](https://user-images.githubusercontent.com/1992754/179056152-9a7088c4-f23a-4c0d-b70b-1ccf879897fb.png)  
 *Close to system tray*
 
-## Bugs & help
-If you have any question or a bug report please open a [new issue](https://github.com/evsar3/sshfs-win-manager/issues/new)
+## Upstream project
+The original SSHFS-Win Manager repository is available at [evsar3/sshfs-win-manager](https://github.com/evsar3/sshfs-win-manager).
 
 ## Contributing
-If you want to contribute with this project, please see the [contributing guide-lines](https://github.com/evsar3/sshfs-win-manager/blob/master/CONTRIBUTING.md)  
-If you just want to build or compile this project see instructions [here](https://github.com/evsar3/sshfs-win-manager/blob/master/CONTRIBUTING.md#building-and-compiling)
-
-## Donation
-If you like this project, please consider [making a donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HXZUJ8WX47238). 100% of the founds will be revert for <u>charity</u>.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development, test mode, and installer build commands.
 
 ## Notes
 <sup>1</sup> This software stores your password in a plain json file. If there is any concerns on storing your password that way, please use one of the other authentication methods. See issue #28
@@ -75,6 +64,7 @@ If you like this project, please consider [making a donation](https://www.paypal
 MIT License
 
 Copyright (c) 2020 Evandro Araújo
+Modifications copyright (c) 2026 Fabrice Simonet
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

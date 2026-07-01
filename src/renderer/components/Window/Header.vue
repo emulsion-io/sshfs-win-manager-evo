@@ -13,9 +13,7 @@
 </template>
 
 <script>
-import { remote } from 'electron'
-
-const window = remote.getCurrentWindow()
+import { ipcRenderer } from 'electron'
 
 export default {
   name: 'Header',
@@ -37,9 +35,9 @@ export default {
   methods: {
     close () {
       if (this.closeAction === 'hide') {
-        window.hide()
+        ipcRenderer.send('window:hide-current')
       } else {
-        window.close()
+        ipcRenderer.send('window:close-current')
       }
 
       this.$emit('close')

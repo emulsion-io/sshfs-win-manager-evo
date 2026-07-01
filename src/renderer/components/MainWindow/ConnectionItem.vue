@@ -1,7 +1,7 @@
 <template>
   <div class="item">
     <transition name="reveal-to-right">
-      <div v-show="showMoveGrip" class="grip">
+      <div v-tooltip="'Drag to reorder'" v-show="showMoveGrip" class="grip">
         <Icon icon="grip"/>
       </div>
     </transition>
@@ -56,7 +56,7 @@
 </template>
 
 <script>
-import Icon from '@/components/Icon'
+import Icon from '@/components/Icon.vue'
 
 export default {
   name: 'connection-item',

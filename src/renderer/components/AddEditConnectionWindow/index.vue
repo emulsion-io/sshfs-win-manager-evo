@@ -90,17 +90,15 @@
 </template>
 
 <script>
-import { remote } from 'electron'
+import { ipcRenderer } from 'electron'
 import { v4 as uuid } from 'uuid'
 
-import Window from '@/components/Window'
-import Tabs from '@/components/Tabs/Tabs'
-import Tab from '@/components/Tabs/Tab'
-import SwitchLabel from '@/components/SwitchLabel'
-import CustomCmdlOptions from './CustomCmdlOptions'
-import Icon from '../Icon'
-
-const windowManager = remote.require('electron-window-manager')
+import Window from '@/components/Window/index.vue'
+import Tabs from '@/components/Tabs/Tabs.vue'
+import Tab from '@/components/Tabs/Tab.vue'
+import SwitchLabel from '@/components/SwitchLabel.vue'
+import CustomCmdlOptions from './CustomCmdlOptions.vue'
+import Icon from '../Icon.vue'
 
 export default {
   name: 'add-edit-connection-window',
@@ -116,7 +114,7 @@ export default {
 
   methods: {
     cancel () {
-      windowManager.closeCurrent()
+      ipcRenderer.send('window:close-current')
     },
 
     save () {
@@ -129,7 +127,7 @@ export default {
         this.$store.dispatch('ADD_CONNECTION', this.conn)
       }
 
-      windowManager.closeCurrent()
+      ipcRenderer.send('window:close-current')
     },
 
     authTypeChange () {
@@ -137,15 +135,11 @@ export default {
       this.conn.keyFile = process.env.USERPROFILE + '\\.ssh\\id_rsa'
     },
 
-    selectPrivateKey () {
-      const file = remote.dialog.showOpenDialog({
-        title: 'Select private key',
-        properties: ['openFile'],
-        defaultPath: process.env.USERPROFILE + '\\.ssh\\'
-      })
+    async selectPrivateKey () {
+      const file = await ipcRenderer.invoke('dialog:select-private-key')
 
-      if (file && file.length > 0) {
-        this.conn.keyFile = file[0]
+      if (file) {
+        this.conn.keyFile = file
       }
     }
   },

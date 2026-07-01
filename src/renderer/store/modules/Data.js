@@ -37,6 +37,10 @@ const mutations = {
     state.connections = []
   },
 
+  IMPORT_CONNECTIONS (state, payload) {
+    state.connections = payload
+  },
+
   MIGRATE_CONNECTIONS (state) {
     state.connections.forEach(conn => {
       // v1.0.2-beta.1
@@ -88,6 +92,11 @@ const actions = {
 
   CLEAR_CONNECTIONS ({ commit }) {
     commit('CLEAR_CONNECTIONS')
+  },
+
+  IMPORT_CONNECTIONS ({ commit }, payload) {
+    commit('IMPORT_CONNECTIONS', payload)
+    commit('MIGRATE_CONNECTIONS')
   },
 
   APPLY_MIGRATIONS ({ commit }) {

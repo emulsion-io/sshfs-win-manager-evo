@@ -1,5 +1,5 @@
 <template>
-  <Window title="SSHFS-Win Manager" closeAction="hide" @close="showRunningInBackgroundNotification">
+  <Window title="SSHFS-Win Manager Evo" closeAction="hide" @close="showRunningInBackgroundNotification">
     <div class="wrap">
       <div class="left">
         <div class="connection-list" :class="{'has-debug-panel': appSettings.showDebugPanel}">
@@ -8,9 +8,18 @@
             <p>Try clicking at 'Add Server' in the panel aside</p>
           </div>
 
-          <draggable :list="connections" @end="updateConnectionList" chosenClass="highlight-item" dragClass="hide-dragging-item" handle=".grip" animation="200">
-            <ConnectionItem v-for="conn in connections" :key="conn.uuid" :conn="conn" :mode="listMode" @connect="connect" @disconnect="disconnect" @open="openLocal" @edit="editConnection" @delete="deleteConnection" @clone="cloneConnection"/>
-          </draggable>
+          <div>
+            <div
+              v-for="(conn, index) in connections"
+              :key="conn.uuid"
+              :draggable="isEditModeEnabled"
+              @dragstart="dragConnection(index)"
+              @dragover.prevent
+              @drop="dropConnection(index)"
+            >
+              <ConnectionItem :conn="conn" :mode="listMode" @connect="connect" @disconnect="disconnect" @open="openLocal" @edit="editConnection" @delete="deleteConnection" @clone="cloneConnection"/>
+            </div>
+          </div>
         </div>
 
         <div v-show="appSettings.showDebugPanel" class="debug-panel">
@@ -37,7 +46,7 @@
 
         <button class="btn" :class="{ 'active': isEditModeEnabled }" :disabled="!hasConnections" @click="toggleEditMode">
           <Icon icon="pen"/>
-          Edit mode
+          Edit / reorder mode
         </button>
         <button class="btn" :class="{ 'active': isDeleteModeEnabled }" :disabled="!hasConnections" @click="toggleDeleteMode">
           <Icon icon="trashCan"/>
@@ -45,10 +54,6 @@
         </button>
 
         <div class="bottom-actions">
-          <button v-if="isDev" class="btn" @click="clearVuex">
-            <Icon icon="unavailable"/>
-            Clear Vuex State
-          </button>
           <button class="btn" @click="settings">
             <Icon icon="settings"/>
             Settings
@@ -65,26 +70,20 @@
 
 <script>
 import fs from 'fs'
-import { remote, clipboard } from 'electron'
+import { ipcRenderer } from 'electron'
 
 import { v4 as uuid } from 'uuid'
 
-import draggable from 'vuedraggable'
+import ProcessManager from '@/ProcessManager.js'
 
-import ProcessManager from '@/ProcessManager'
-
-import Window from '@/components/Window'
-import Icon from '@/components/Icon'
-import ConnectionItem from './ConnectionItem'
-
-const windowManager = remote.require('electron-window-manager')
+import Window from '@/components/Window/index.vue'
+import Icon from '@/components/Icon.vue'
+import ConnectionItem from './ConnectionItem.vue'
 
 export default {
   name: 'main-window',
 
   components: {
-    draggable,
-
     Window,
     Icon,
 
@@ -92,6 +91,23 @@ export default {
   },
 
   methods: {
+    dragConnection (index) {
+      this.draggedConnectionIndex = index
+    },
+
+    dropConnection (index) {
+      if (this.draggedConnectionIndex === null || this.draggedConnectionIndex === index) {
+        return
+      }
+
+      const items = [...this.connections]
+      const dragged = items.splice(this.draggedConnectionIndex, 1)[0]
+      items.splice(index, 0, dragged)
+
+      this.draggedConnectionIndex = null
+      this.$store.dispatch('REFRESH_CONNECTIONS', items)
+    },
+
     toggleDeleteMode () {
       this.listMode = this.listMode === 'delete' ? 'none' : 'delete'
     },
@@ -119,23 +135,22 @@ export default {
       }
 
       if (conn.authType === 'password-ask') {
-        const window = windowManager.createNew('password-prompt-window', '', `/index.html#password-prompt/${conn.uuid}`, null, {
-          height: 190,
-          width: 350,
-          useContentSize: true,
-          frame: false,
-          maximizable: false,
-          minimizable: false,
-          resizable: false,
-          modal: true,
-          parent: windowManager.get('main-window').object
-        }).create()
-
-        window.object.once('ready-to-show', () => {
-          window.object.show()
+        ipcRenderer.invoke('window:open', {
+          name: 'password-prompt-window',
+          route: `#/password-prompt/${conn.uuid}`,
+          options: {
+            height: 190,
+            width: 350,
+            useContentSize: true,
+            frame: false,
+            maximizable: false,
+            minimizable: false,
+            resizable: false,
+            modal: true
+          }
         })
 
-        windowManager.bridge.once('main-window-message', data => {
+        ipcRenderer.once('password-prompt:response', (event, data) => {
           switch (data.message) {
             case 'connection-password':
               connect(data.conn)
@@ -162,42 +177,40 @@ export default {
     },
 
     openLocal (path) {
-      remote.shell.openItem(path)
+      ipcRenderer.invoke('shell:open-path', path)
     },
 
     addNewConnection () {
-      const window = windowManager.createNew('add-new-connection-window', '', '/index.html#add-new-connection', null, {
-        height: 770,
-        width: 500,
-        useContentSize: true,
-        frame: false,
-        maximizable: false,
-        minimizable: false,
-        resizable: false,
-        modal: true,
-        parent: windowManager.get('main-window').object
-      }).create()
-
-      window.object.once('ready-to-show', () => {
-        window.object.show()
+      ipcRenderer.invoke('window:open', {
+        name: 'add-new-connection-window',
+        route: '#/add-new-connection',
+        options: {
+          height: 770,
+          width: 500,
+          useContentSize: true,
+          frame: false,
+          maximizable: false,
+          minimizable: false,
+          resizable: false,
+          modal: true
+        }
       })
     },
 
     editConnection (conn) {
-      const window = windowManager.createNew('edit-connection-window', '', `/index.html#edit-connection/${conn.uuid}`, null, {
-        height: 770,
-        width: 500,
-        useContentSize: true,
-        frame: false,
-        maximizable: false,
-        minimizable: false,
-        resizable: false,
-        modal: true,
-        parent: windowManager.get('main-window').object
-      }).create()
-
-      window.object.once('ready-to-show', () => {
-        window.object.show()
+      ipcRenderer.invoke('window:open', {
+        name: 'edit-connection-window',
+        route: `#/edit-connection/${conn.uuid}`,
+        options: {
+          height: 770,
+          width: 500,
+          useContentSize: true,
+          frame: false,
+          maximizable: false,
+          minimizable: false,
+          resizable: false,
+          modal: true
+        }
       })
     },
 
@@ -223,38 +236,36 @@ export default {
     },
 
     settings () {
-      const window = windowManager.createNew('settings-window', '', '/index.html#settings', null, {
-        height: 365,
-        width: 500,
-        useContentSize: true,
-        frame: false,
-        maximizable: false,
-        minimizable: false,
-        resizable: false,
-        modal: true,
-        parent: windowManager.get('main-window').object
-      }).create()
-
-      window.object.once('ready-to-show', () => {
-        window.object.show()
+      ipcRenderer.invoke('window:open', {
+        name: 'settings-window',
+        route: '#/settings',
+        options: {
+          height: 620,
+          width: 540,
+          useContentSize: true,
+          frame: false,
+          maximizable: false,
+          minimizable: false,
+          resizable: true,
+          modal: true
+        }
       })
     },
 
     about () {
-      const window = windowManager.createNew('about-window', '', '/index.html#about', null, {
-        height: 350,
-        width: 550,
-        useContentSize: true,
-        frame: false,
-        maximizable: false,
-        minimizable: false,
-        resizable: false,
-        modal: true,
-        parent: windowManager.get('main-window').object
-      }).create()
-
-      window.object.once('ready-to-show', () => {
-        window.object.show()
+      ipcRenderer.invoke('window:open', {
+        name: 'about-window',
+        route: '#/about',
+        options: {
+          height: 350,
+          width: 550,
+          useContentSize: true,
+          frame: false,
+          maximizable: false,
+          minimizable: false,
+          resizable: false,
+          modal: true
+        }
       })
     },
 
@@ -268,15 +279,8 @@ export default {
       }
     },
 
-    clearVuex () {
-      this.$store.dispatch('CLEAR_CONNECTIONS')
-      this.$store.dispatch('RESET_SETTINGS')
-    },
-
-    notify (text, icon = 'app-icon') {
-      /* eslint-disable-next-line */
-      new Notification('SSHFS-Win Manager', {
-        icon: __static + '/' + icon + '.png',
+    notify (text) {
+      new Notification('SSHFS-Win Manager Evo', {
         body: text
       })
     },
@@ -290,7 +294,7 @@ export default {
     },
 
     copyDebugOutput () {
-      clipboard.writeText(this.debugOutput)
+      ipcRenderer.send('clipboard:write-text', this.debugOutput)
 
       this.notify('Debug output copied to clipboard')
     },
@@ -313,10 +317,6 @@ export default {
       return this.listMode === 'delete'
     },
 
-    isDev () {
-      return process.env.NODE_ENV === 'development'
-    },
-
     connections () {
       return this.$store.state.Data.connections
     },
@@ -329,6 +329,7 @@ export default {
   data () {
     return {
       listMode: 'none',
+      draggedConnectionIndex: null,
       runningInBackgroundNotificationShowed: false,
       debugOutput: ''
     }

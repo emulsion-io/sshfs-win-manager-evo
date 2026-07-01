@@ -8,6 +8,8 @@
 export default {
   name: 'Tab',
 
+  inject: ['registerTab'],
+
   props: {
     active: {
       required: false,
@@ -24,6 +26,10 @@ export default {
     return {
       isActive: this.active
     }
+  },
+
+  mounted () {
+    this.registerTab(this)
   }
 }
 </script>

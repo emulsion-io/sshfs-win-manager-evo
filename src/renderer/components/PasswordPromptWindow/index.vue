@@ -15,11 +15,9 @@
 </template>
 
 <script>
-import { remote } from 'electron'
+import { ipcRenderer } from 'electron'
 
-import Window from '@/components/Window'
-
-const windowManager = remote.require('electron-window-manager')
+import Window from '@/components/Window/index.vue'
 
 export default {
   name: 'password-prompt-window',
@@ -30,23 +28,23 @@ export default {
 
   methods: {
     cancel () {
-      windowManager.bridge.emit('main-window-message', {
+      ipcRenderer.send('password-prompt:response', {
         message: 'connection-password-cancel',
         conn: this.conn
       })
 
-      windowManager.closeCurrent()
+      ipcRenderer.send('window:close-current')
     },
 
     ok () {
       this.conn.password = this.password
 
-      windowManager.bridge.emit('main-window-message', {
+      ipcRenderer.send('password-prompt:response', {
         message: 'connection-password',
         conn: this.conn
       })
 
-      windowManager.closeCurrent()
+      ipcRenderer.send('window:close-current')
     }
   },
 

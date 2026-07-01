@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
 import os from 'os'
 
-import store from './store'
-import ProcessHandlerWin from './ProcessHandlerWin'
+import store from './store/index.js'
+import ProcessHandlerWin from './ProcessHandlerWin.js'
 
 let processList = []
 let processWatchList = {}
@@ -44,7 +44,7 @@ class ProcessManager extends EventEmitter {
   }
 
   terminate (pid) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.processHandler.terminate(pid).then(() => {
         this.emit('terminated', pid)
 

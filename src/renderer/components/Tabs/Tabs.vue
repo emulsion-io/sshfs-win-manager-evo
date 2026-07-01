@@ -14,7 +14,17 @@
 export default {
   name: 'Tabs',
 
+  provide () {
+    return {
+      registerTab: this.registerTab
+    }
+  },
+
   methods: {
+    registerTab (tab) {
+      this.tabs.push(tab)
+    },
+
     select (tab) {
       this.tabs.forEach(tab => {
         tab.isActive = false
@@ -28,12 +38,6 @@ export default {
     return {
       tabs: []
     }
-  },
-
-  mounted () {
-    this.$children.forEach(tab => {
-      this.tabs.push(tab)
-    })
   }
 }
 </script>

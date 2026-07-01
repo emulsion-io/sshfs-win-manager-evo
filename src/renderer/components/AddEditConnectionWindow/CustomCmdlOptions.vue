@@ -1,6 +1,6 @@
 <template>
   <div class="custom-cmdl-list">
-    <div v-for="param in value" :key="param.uuid" class="list-item">
+    <div v-for="param in modelValue" :key="param.uuid" class="list-item">
       <div class="row param">
         <div class="name">
           <select v-model="param.name" @input="emmitChanges" @change="paramNameChange(param)">
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <h1 v-if="value.length === 0" class="no-data">No params added yet</h1>
+    <h1 v-if="modelValue.length === 0" class="no-data">No params added yet</h1>
 
     <button @click="addParam" class="btn add-param" :disabled="hasEmptyParam">
       <Icon icon="plus"/> Add param
@@ -33,9 +33,9 @@
 <script>
 import { v4 as uuid } from 'uuid'
 
-import Icon from '@/components/Icon'
+import Icon from '@/components/Icon.vue'
 
-import SshfsParamsList from '@/SshfsParamsList'
+import SshfsParamsList from '@/SshfsParamsList.js'
 
 export default {
   name: 'CustomCmdlOptions',
@@ -45,17 +45,17 @@ export default {
   },
 
   props: {
-    value: {
+    modelValue: {
       type: Array,
       required: false,
-      default: []
+      default: () => []
     }
   },
 
   methods: {
     addParam () {
       if (!this.hasEmptyParam) {
-        this.value.push({
+        this.modelValue.push({
           uuid: uuid(),
           name: '',
           value: ''
@@ -66,7 +66,7 @@ export default {
     },
 
     removeParam (param) {
-      this.value.splice(this.value.findIndex(a => a.uuid === param.uuid), 1)
+      this.modelValue.splice(this.modelValue.findIndex(a => a.uuid === param.uuid), 1)
 
       this.emmitChanges()
     },
@@ -86,7 +86,7 @@ export default {
     },
 
     emmitChanges () {
-      this.$emit('input', this.value)
+      this.$emit('update:modelValue', this.modelValue)
     },
 
     paramNameChange (param) {
@@ -96,7 +96,7 @@ export default {
 
   computed: {
     hasEmptyParam () {
-      return this.value.find(a => a.name === '')
+      return this.modelValue.find(a => a.name === '')
     }
   },
 
