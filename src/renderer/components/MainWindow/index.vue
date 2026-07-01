@@ -832,23 +832,6 @@ export default {
       })
     },
 
-    about () {
-      ipcRenderer.invoke('window:open', {
-        name: 'about-window',
-        route: '#/about',
-        options: {
-          height: 350,
-          width: 550,
-          useContentSize: true,
-          frame: false,
-          maximizable: false,
-          minimizable: false,
-          resizable: false,
-          modal: true
-        }
-      })
-    },
-
     showRunningInBackgroundNotification () {
       if (!this.runningInBackgroundNotificationShowed) {
         if (this.$store.state.Settings.settings.displayTrayMessageOnClose) {
@@ -1026,7 +1009,7 @@ export default {
     },
 
     selectedConnection () {
-      return this.connections.find(conn => conn.uuid === this.selectedConnectionUuid) || this.connections[0] || null
+      return this.connections.find(conn => conn.uuid === this.selectedConnectionUuid) || this.filteredConnections[0] || null
     },
 
     connectedConnections () {
@@ -1043,7 +1026,7 @@ export default {
   },
 
   watch: {
-    connections: {
+    filteredConnections: {
       handler (connections) {
         if (!connections.length) {
           this.selectedConnectionUuid = null
@@ -1089,6 +1072,12 @@ export default {
 
     ipcRenderer.invoke('app:get-version').then(version => {
       this.appVersion = version
+    })
+
+    ipcRenderer.on('main-window:show-section', (event, section) => {
+      if (['connections', 'favorites', 'settings', 'about'].includes(section)) {
+        this.activeSection = section
+      }
     })
 
     const originalConsoleLog = console.log.bind(console)

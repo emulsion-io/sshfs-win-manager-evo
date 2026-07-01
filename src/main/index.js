@@ -215,7 +215,7 @@ if (isSecondInstance) {
     mainWindow = createAppWindow('main-window', '', {
       title: 'SSHFS-Win Manager Evo',
       height: 760,
-      width: 1280,
+      width: 1440,
       minHeight: 650,
       minWidth: 1100,
       useContentSize: true,
@@ -247,21 +247,9 @@ if (isSecondInstance) {
       {
         label: 'About',
         click () {
-          const win = createAppWindow('about-window', '#/about', {
-            height: 380,
-            width: 550,
-            useContentSize: true,
-            frame: false,
-            maximizable: false,
-            minimizable: false,
-            resizable: false,
-            modal: true,
-            parent: mainWindow
-          })
-
-          win.once('ready-to-show', () => {
-            win.show()
-          })
+          mainWindow.show()
+          mainWindow.focus()
+          mainWindow.webContents.send('main-window:show-section', 'about')
         }
       }
     ])

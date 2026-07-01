@@ -9,9 +9,10 @@
   "license": "MIT",
   "main": "./out/main/index.js",
   "scripts": {
-    "build": "node scripts/run-electron-vite.cjs build && electron-builder",
-    "build:dir": "node scripts/run-electron-vite.cjs build && electron-builder --dir",
+    "build": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder",
+    "build:dir": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --dir",
     "build:clean": "rimraf out dist/electron dist/web",
+    "build:clean-output": "node scripts/clean-build-output.cjs",
     "dev": "node scripts/run-electron-vite.cjs dev",
     "dev:tray": "node scripts/run-electron-vite.cjs dev -- --systray",
     "lint": "eslint \"src/**/*.{js,vue}\"",
