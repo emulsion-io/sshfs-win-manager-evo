@@ -1,10 +1,13 @@
+import { defaultLocale, normalizeLocale } from '@/i18n/locales.js'
+
 const defaultSettings = {
   sshfsBinary: 'C:\\Program Files\\SSHFS-Win\\bin\\sshfs.exe',
   startupWithOS: true,
   displayTrayMessageOnClose: true,
   processTrackTimeout: 15,
   showDebugPanel: false,
-  theme: 'dark-graphite'
+  theme: 'dark-graphite',
+  language: defaultLocale
 }
 
 function normalizeSettings (settings = {}) {
@@ -16,7 +19,8 @@ function normalizeSettings (settings = {}) {
     displayTrayMessageOnClose: typeof settings.displayTrayMessageOnClose === 'boolean' ? settings.displayTrayMessageOnClose : defaultSettings.displayTrayMessageOnClose,
     processTrackTimeout: Number(settings.processTrackTimeout) || defaultSettings.processTrackTimeout,
     showDebugPanel: typeof settings.showDebugPanel === 'boolean' ? settings.showDebugPanel : defaultSettings.showDebugPanel,
-    theme: settings.theme || defaultSettings.theme
+    theme: settings.theme || defaultSettings.theme,
+    language: normalizeLocale(settings.language)
   }
 }
 

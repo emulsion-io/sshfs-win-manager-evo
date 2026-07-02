@@ -2,12 +2,12 @@
   <Window :title="promptTitle" @close="cancel">
     <div v-if="conn" class="wrap">
       <div v-if="isKeyPassphraseInteractive" class="form-item">
-        <label>Key passphrase</label>
+        <label>{{ $t('passwordPrompt.keyPassphrase') }}</label>
         <input type="password" autofocus v-model="keyPassphrase" @keydown.enter="ok" @keydown.esc="cancel">
       </div>
 
       <div v-if="isInteractiveResponseMode" class="form-item">
-        <label>Verification code</label>
+        <label>{{ $t('passwordPrompt.verificationCode') }}</label>
         <input type="text" :autofocus="!isKeyPassphraseInteractive" v-model="verificationCode" @keydown.enter="ok" @keydown.esc="cancel">
       </div>
 
@@ -17,12 +17,12 @@
       </div>
 
       <div class="footer">
-        <button class="btn" @click="cancel">Cancel</button>
-        <button class="btn default" @click="ok">OK</button>
+        <button class="btn" @click="cancel">{{ $t('common.cancel') }}</button>
+        <button class="btn default" @click="ok">{{ $t('common.ok') }}</button>
       </div>
     </div>
     <div v-else class="wrap loading">
-      Loading...
+      {{ $t('common.loading') }}
     </div>
   </Window>
 </template>
@@ -71,16 +71,16 @@ export default {
 
     promptLabel () {
       if (!this.conn) {
-        return 'Password'
+        return this.$t('passwordPrompt.password')
       }
 
       if (this.conn.authType === 'key-file-passphrase') {
-        return 'Passphrase'
+        return this.$t('passwordPrompt.passphrase')
       }
 
       return this.isInteractiveOnly
-        ? 'Password (optional)'
-        : 'Password'
+        ? this.$t('passwordPrompt.passwordOptional')
+        : this.$t('passwordPrompt.password')
     },
 
     promptTitle () {
@@ -89,8 +89,8 @@ export default {
       }
 
       return this.isInteractiveResponseMode
-        ? `PAM/OTP for ${this.conn.user}@${this.conn.host}`
-        : `${this.promptLabel} for ${this.conn.user}@${this.conn.host}`
+        ? this.$t('passwordPrompt.pamTitle', { user: this.conn.user, host: this.conn.host })
+        : this.$t('passwordPrompt.title', { label: this.promptLabel, user: this.conn.user, host: this.conn.host })
     }
   },
 

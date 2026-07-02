@@ -9,7 +9,7 @@
         <button
           class="nav-collapse"
           type="button"
-          :title="navCollapsed ? 'Deplier le menu' : 'Replier le menu'"
+          :title="navCollapsed ? $t('nav.expand') : $t('nav.collapse')"
           @click="navCollapsed = !navCollapsed"
         >
           <Icon icon="grip"/>
@@ -17,27 +17,27 @@
 
         <button class="nav-item" :class="{ active: activeSection === 'connections' }" type="button" @click="showConnections">
           <Icon icon="cloudDrive"/>
-          <span class="nav-label">Connexions</span>
+          <span class="nav-label">{{ $t('nav.connections') }}</span>
         </button>
 
         <button class="nav-item" :class="{ active: activeSection === 'favorites' }" type="button" @click="showFavorites">
           <Icon icon="star"/>
-          <span class="nav-label">Favoris</span>
+          <span class="nav-label">{{ $t('nav.favorites') }}</span>
         </button>
 
         <button class="nav-item" :class="{ active: activeSection === 'settings' }" type="button" @click="showSettings">
           <Icon icon="settings"/>
-          <span class="nav-label">Parametres</span>
+          <span class="nav-label">{{ $t('nav.settings') }}</span>
         </button>
 
         <button class="nav-item" :class="{ active: activeSection === 'about' }" type="button" @click="showAbout">
           <Icon icon="help"/>
-          <span class="nav-label">A propos</span>
+          <span class="nav-label">{{ $t('nav.about') }}</span>
         </button>
 
         <div class="service-status">
           <span class="status-dot"></span>
-          <span class="nav-label">Service actif</span>
+          <span class="nav-label">{{ $t('app.serviceActive') }}</span>
           <small class="nav-label">v{{ appVersion }}</small>
         </div>
       </aside>
@@ -46,20 +46,20 @@
         <div class="panel-toolbar">
           <label class="search-box">
             <Icon icon="info"/>
-            <input v-model="searchText" type="search" placeholder="Rechercher une connexion...">
+            <input v-model="searchText" type="search" :placeholder="$t('list.searchPlaceholder')">
           </label>
 
           <select v-model="sortMode" class="sort-select">
             <option value="name">A-Z</option>
-            <option value="status">Statut</option>
-            <option value="manual">Manuel</option>
+            <option value="status">{{ $t('list.sortStatus') }}</option>
+            <option value="manual">{{ $t('list.sortManual') }}</option>
           </select>
         </div>
 
         <div v-if="!hasConnections" class="empty-list">
           <Icon icon="cloudDrive"/>
-          <h1>Aucune connexion</h1>
-          <p>Ajoute une premiere connexion pour commencer.</p>
+          <h1>{{ $t('list.emptyTitle') }}</h1>
+          <p>{{ $t('list.emptyText') }}</p>
         </div>
 
         <div v-else class="connection-list">
@@ -94,7 +94,7 @@
                   <button
                     type="button"
                     :disabled="!canMoveConnection(conn, -1)"
-                    v-tooltip="'Monter'"
+                    v-tooltip="$t('list.moveUp')"
                     @click.stop="moveConnection(conn, -1)"
                   >
                     ↑
@@ -102,7 +102,7 @@
                   <button
                     type="button"
                     :disabled="!canMoveConnection(conn, 1)"
-                    v-tooltip="'Descendre'"
+                    v-tooltip="$t('list.moveDown')"
                     @click.stop="moveConnection(conn, 1)"
                   >
                     ↓
@@ -116,7 +116,7 @@
                     type="button"
                     class="round-action favorite"
                     :class="{ active: conn.favorite }"
-                    v-tooltip="conn.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                    v-tooltip="conn.favorite ? $t('list.removeFavorite') : $t('list.addFavorite')"
                     @click.stop="toggleFavorite(conn)"
                   >
                     <Icon icon="star"/>
@@ -125,7 +125,7 @@
                     type="button"
                     class="round-action"
                     :disabled="conn.status !== 'connected'"
-                    v-tooltip="'Ouvrir le dossier'"
+                    v-tooltip="$t('common.openFolder')"
                     @click.stop="openLocal(conn.mountPoint === 'auto' ? conn.preferredMountPoint : conn.mountPoint)"
                   >
                     <Icon icon="openFolder"/>
@@ -134,7 +134,7 @@
                     v-if="conn.status === 'connected'"
                     type="button"
                     class="round-action primary"
-                    v-tooltip="'Deconnecter'"
+                    v-tooltip="$t('common.disconnect')"
                     @click.stop="disconnect(conn)"
                   >
                     <Icon icon="plugConnected"/>
@@ -145,7 +145,7 @@
                     class="round-action"
                     :class="{ loading: conn.status === 'connecting' }"
                     :disabled="conn.status === 'connecting' || conn.status === 'disconnecting'"
-                    v-tooltip="conn.status === 'connecting' ? 'Connexion...' : 'Connecter'"
+                    v-tooltip="conn.status === 'connecting' ? $t('common.connecting') : $t('common.connect')"
                     @click.stop="connect(conn)"
                   >
                     <Icon icon="plugDisconnected"/>
@@ -161,33 +161,40 @@
         <div class="detail-topbar">
           <button class="btn primary-action" type="button" @click="addNewConnection">
             <Icon icon="plus"/>
-            Nouvelle connexion
+            {{ $t('detail.newConnection') }}
           </button>
         </div>
 
         <div v-if="activeSection === 'settings'" class="workspace-card settings-workspace">
           <header class="workspace-header">
             <div>
-              <h1>Parametres</h1>
-              <p>Configuration generale, theme et import/export des connexions.</p>
+              <h1>{{ $t('settings.title') }}</h1>
+              <p>{{ $t('settings.subtitle') }}</p>
             </div>
           </header>
 
           <div class="settings-grid">
             <label class="field">
-              <span>SSHFS binary</span>
+              <span>{{ $t('settings.sshfsBinary') }}</span>
               <input v-model="settingsForm.sshfsBinary" type="text" placeholder="C:\Program Files\SSHFS-Win\bin\sshfs.exe">
             </label>
 
             <label class="field compact">
-              <span>Process timeout</span>
+              <span>{{ $t('settings.processTimeout') }}</span>
               <input v-model.number="settingsForm.processTrackTimeout" type="number" min="1">
             </label>
 
             <label class="field">
-              <span>Theme</span>
+              <span>{{ $t('settings.theme') }}</span>
               <select v-model="settingsForm.theme" @change="previewTheme(settingsForm.theme)">
                 <option v-for="theme in themes" :key="theme.value" :value="theme.value">{{ theme.label }}</option>
+              </select>
+            </label>
+
+            <label class="field compact">
+              <span>{{ $t('settings.language') }}</span>
+              <select v-model="settingsForm.language" @change="previewLanguage(settingsForm.language)">
+                <option v-for="locale in localeOptions" :key="locale.value" :value="locale.value">{{ $t(locale.labelKey) }}</option>
               </select>
             </label>
 
@@ -195,35 +202,35 @@
               <label class="settings-toggle">
                 <input v-model="settingsForm.startupWithOS" type="checkbox">
                 <span class="switch-track"></span>
-                <span class="toggle-text">Demarrer avec Windows</span>
+                <span class="toggle-text">{{ $t('settings.startupWithOS') }}</span>
               </label>
               <label class="settings-toggle">
                 <input v-model="settingsForm.displayTrayMessageOnClose" type="checkbox">
                 <span class="switch-track"></span>
-                <span class="toggle-text">Message tray a la fermeture</span>
+                <span class="toggle-text">{{ $t('settings.displayTrayMessageOnClose') }}</span>
               </label>
               <label class="settings-toggle">
                 <input v-model="settingsForm.showDebugPanel" type="checkbox">
                 <span class="switch-track"></span>
-                <span class="toggle-text">Afficher le panneau debug</span>
+                <span class="toggle-text">{{ $t('settings.showDebugPanel') }}</span>
               </label>
             </div>
 
             <div class="settings-actions">
               <button class="action-button" type="button" @click="exportConnections">
                 <Icon icon="duplicate"/>
-                Export JSON
+                {{ $t('settings.exportJson') }}
               </button>
               <button class="action-button" type="button" @click="importConnections">
                 <Icon icon="openFolder"/>
-                Import JSON
+                {{ $t('settings.importJson') }}
               </button>
             </div>
           </div>
 
           <footer class="workspace-footer">
-            <button class="btn" type="button" @click="resetSettingsForm">Annuler</button>
-            <button class="btn primary-action" type="button" @click="saveSettings">Enregistrer</button>
+            <button class="btn" type="button" @click="resetSettingsForm">{{ $t('common.cancel') }}</button>
+            <button class="btn primary-action" type="button" @click="saveSettings">{{ $t('common.save') }}</button>
           </footer>
         </div>
 
@@ -231,17 +238,17 @@
           <header class="workspace-header">
             <div>
               <h1>SSHFS-Win Manager Evo</h1>
-              <p>Version {{ appVersion }} - edition Evo par Fabrice Simonet.</p>
+              <p>{{ $t('about.versionLine', { version: appVersion }) }}</p>
             </div>
           </header>
 
           <div class="about-content">
-            <p>Cette edition est maintenue par Fabrice Simonet.</p>
-            <p>Site web: <button class="text-link" type="button" @click="openExternal('https://emulsion.io')">emulsion.io</button></p>
-            <p>Base sur le projet original SSHFS-Win Manager cree par Evandro Araujo.</p>
-            <p>Licence MIT. Les notices de copyright et de licence du projet original sont conservees.</p>
+            <p>{{ $t('about.maintainedBy') }}</p>
+            <p>{{ $t('about.website') }} <button class="text-link" type="button" @click="openExternal('https://emulsion.io')">emulsion.io</button></p>
+            <p>{{ $t('about.basedOn') }}</p>
+            <p>{{ $t('about.license') }}</p>
 
-            <h2>Bibliotheques principales</h2>
+            <h2>{{ $t('about.libraries') }}</h2>
             <div class="library-grid">
               <button type="button" @click="openExternal('https://github.com/nodejs/node')">Node.js</button>
               <button type="button" @click="openExternal('https://github.com/electron/electron')">Electron</button>
@@ -257,7 +264,7 @@
         <div v-else-if="selectedConnection" class="detail-card">
           <header class="detail-header">
             <span class="detail-icon-wrap">
-              <button class="detail-icon" type="button" v-tooltip="'Changer le logo'" @click="selectConnectionIcon(selectedConnection)">
+              <button class="detail-icon" type="button" v-tooltip="$t('detail.changeIcon')" @click="selectConnectionIcon(selectedConnection)">
                 <img v-if="selectedConnection.iconDataUrl" :src="selectedConnection.iconDataUrl" :alt="selectedConnection.name">
                 <Icon v-else icon="cloudDrive"/>
               </button>
@@ -265,7 +272,7 @@
                 v-if="selectedConnection.iconDataUrl"
                 class="detail-icon-remove"
                 type="button"
-                v-tooltip="'Retirer le logo'"
+                v-tooltip="$t('detail.removeIcon')"
                 @click="removeConnectionIcon(selectedConnection)"
               >
                 ×
@@ -289,14 +296,14 @@
                 </p>
 
                 <div class="detail-title-actions">
-                  <button type="button" class="icon-button" v-tooltip="'Editer'" @click="editConnection(selectedConnection)">
+                  <button type="button" class="icon-button" v-tooltip="$t('common.edit')" @click="editConnection(selectedConnection)">
                     <Icon icon="pen"/>
                   </button>
                   <button
                     type="button"
                     class="icon-button favorite"
                     :class="{ active: selectedConnection.favorite }"
-                    v-tooltip="selectedConnection.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                    v-tooltip="selectedConnection.favorite ? $t('list.removeFavorite') : $t('list.addFavorite')"
                     @click="toggleFavorite(selectedConnection)"
                   >
                     <Icon icon="star"/>
@@ -309,37 +316,37 @@
           <div class="detail-body">
             <div class="info-panel">
               <div class="info-row">
-                <span>Statut</span>
+                <span>{{ $t('detail.status') }}</span>
                 <strong>{{ statusLabel(selectedConnection) }}</strong>
               </div>
               <div class="info-row">
-                <span>Type de connexion</span>
+                <span>{{ $t('detail.connectionType') }}</span>
                 <strong>SSHFS</strong>
               </div>
               <div class="info-row">
-                <span>Adresse</span>
+                <span>{{ $t('detail.address') }}</span>
                 <strong>{{ selectedConnection.host }}</strong>
               </div>
               <div class="info-row">
-                <span>Port</span>
+                <span>{{ $t('detail.port') }}</span>
                 <strong>{{ selectedConnection.port || 22 }}</strong>
               </div>
               <div class="info-row">
-                <span>Point de montage</span>
+                <span>{{ $t('detail.mountPoint') }}</span>
                 <strong>{{ mountPointLabel(selectedConnection) }}</strong>
               </div>
               <div class="info-row">
-                <span>Chemin distant</span>
+                <span>{{ $t('detail.remotePath') }}</span>
                 <strong>{{ selectedConnection.folder || '/' }}</strong>
               </div>
               <div class="info-row">
-                <span>Utilisateur</span>
+                <span>{{ $t('detail.user') }}</span>
                 <strong>{{ selectedConnection.user || '-' }}</strong>
               </div>
               <div class="info-row ssh-command-row">
-                <span>Connexion SSH</span>
+                <span>{{ $t('detail.sshCommand') }}</span>
                 <strong>
-                  <button type="button" v-tooltip="'Copier la commande SSH'" @click="copySshCommand(selectedConnection)">
+                  <button type="button" v-tooltip="$t('detail.copySshCommand')" @click="copySshCommand(selectedConnection)">
                     <Icon icon="duplicate"/>
                   </button>
                 </strong>
@@ -347,7 +354,7 @@
             </div>
 
             <aside class="actions-panel">
-              <h2>Actions</h2>
+              <h2>{{ $t('detail.actions') }}</h2>
               <button
                 v-if="selectedConnection.status === 'connected'"
                 class="action-button primary"
@@ -355,7 +362,7 @@
                 @click="disconnect(selectedConnection)"
               >
                 <Icon icon="plugConnected"/>
-                Deconnecter
+                {{ $t('common.disconnect') }}
               </button>
               <button
                 v-else
@@ -366,15 +373,15 @@
                 @click="connect(selectedConnection)"
               >
                 <Icon icon="plugDisconnected"/>
-                {{ selectedConnection.status === 'connecting' ? 'Connexion...' : 'Connecter' }}
+                {{ selectedConnection.status === 'connecting' ? $t('common.connecting') : $t('common.connect') }}
               </button>
               <button class="action-button" type="button" @click="editConnection(selectedConnection)">
                 <Icon icon="pen"/>
-                Editer
+                {{ $t('common.edit') }}
               </button>
               <button class="action-button" type="button" @click="cloneConnection(selectedConnection)">
                 <Icon icon="duplicate"/>
-                Dupliquer
+                {{ $t('common.duplicate') }}
               </button>
               <button
                 class="action-button"
@@ -383,11 +390,11 @@
                 @click="openLocal(selectedConnection.mountPoint === 'auto' ? selectedConnection.preferredMountPoint : selectedConnection.mountPoint)"
               >
                 <Icon icon="openFolder"/>
-                Ouvrir le dossier
+                {{ $t('common.openFolder') }}
               </button>
               <button class="action-button danger" type="button" @click="deleteConnection(selectedConnection)">
                 <Icon icon="trashCan"/>
-                Supprimer
+                {{ $t('common.delete') }}
               </button>
             </aside>
           </div>
@@ -395,24 +402,24 @@
 
         <div v-else class="empty-detail">
           <Icon icon="cloudDrive"/>
-          <h1>Selectionne une connexion</h1>
-          <p>Les informations et actions rapides apparaitront ici.</p>
+          <h1>{{ $t('detail.selectTitle') }}</h1>
+          <p>{{ $t('detail.selectText') }}</p>
         </div>
 
         <div class="stats-bar">
-          <span><Icon icon="cloudDrive"/> {{ connections.length }} connexions</span>
-          <span class="success"><span class="status-dot"></span> {{ connectedConnections.length }} connectees</span>
-          <span class="warning"><span class="status-dot"></span> {{ busyConnections.length }} en cours</span>
+          <span><Icon icon="cloudDrive"/> {{ $t('detail.connectionsCount', { count: connections.length }) }}</span>
+          <span class="success"><span class="status-dot"></span> {{ $t('detail.connectedCount', { count: connectedConnections.length }) }}</span>
+          <span class="warning"><span class="status-dot"></span> {{ $t('detail.busyCount', { count: busyConnections.length }) }}</span>
         </div>
 
         <div v-show="appSettings.showDebugPanel" class="debug-panel">
           <div class="debug-header">
-            <strong>Debug output</strong>
+            <strong>{{ $t('detail.debugOutput') }}</strong>
             <span>
-              <button type="button" v-tooltip="'Clear debug output'" @click="clearDebugOutput">
+              <button type="button" v-tooltip="$t('detail.clearDebug')" @click="clearDebugOutput">
                 <Icon icon="unavailable"/>
               </button>
-              <button type="button" v-tooltip="'Copy debug output to clipboard'" @click="copyDebugOutput">
+              <button type="button" v-tooltip="$t('detail.copyDebug')" @click="copyDebugOutput">
                 <Icon icon="duplicate"/>
               </button>
             </span>
@@ -431,6 +438,8 @@ import { ipcRenderer } from 'electron'
 import { v4 as uuid } from 'uuid'
 
 import ProcessManager from '@/ProcessManager.js'
+import { setLocale } from '@/i18n/index.js'
+import { defaultLocale, normalizeLocale, supportedLocaleOptions } from '@/i18n/locales.js'
 
 import Window from '@/components/Window/index.vue'
 import Icon from '@/components/Icon.vue'
@@ -441,7 +450,8 @@ const defaultSettings = {
   displayTrayMessageOnClose: true,
   processTrackTimeout: 15,
   showDebugPanel: false,
-  theme: 'dark-graphite'
+  theme: 'dark-graphite',
+  language: defaultLocale
 }
 
 function normalizeSettings (settings = {}) {
@@ -453,7 +463,8 @@ function normalizeSettings (settings = {}) {
     displayTrayMessageOnClose: typeof settings.displayTrayMessageOnClose === 'boolean' ? settings.displayTrayMessageOnClose : defaultSettings.displayTrayMessageOnClose,
     processTrackTimeout: Number(settings.processTrackTimeout) || defaultSettings.processTrackTimeout,
     showDebugPanel: typeof settings.showDebugPanel === 'boolean' ? settings.showDebugPanel : defaultSettings.showDebugPanel,
-    theme: settings.theme || defaultSettings.theme
+    theme: settings.theme || defaultSettings.theme,
+    language: normalizeLocale(settings.language)
   }
 }
 
@@ -524,6 +535,11 @@ export default {
     resetSettingsForm () {
       this.settingsForm = normalizeSettings(this.appSettings)
       this.previewTheme(this.settingsForm.theme)
+      this.previewLanguage(this.settingsForm.language)
+    },
+
+    previewLanguage (language) {
+      setLocale(language)
     },
 
     saveSettings () {
@@ -551,7 +567,7 @@ export default {
       try {
         await ipcRenderer.invoke('connections:export', JSON.parse(JSON.stringify(payload)))
       } catch {
-        window.alert('Export failed. Please try again.')
+        window.alert(this.$t('settings.exportFailed'))
       }
     },
 
@@ -567,18 +583,18 @@ export default {
       try {
         data = JSON.parse(result.content)
       } catch {
-        window.alert('Invalid import file: JSON parsing failed.')
+        window.alert(this.$t('settings.invalidImportJson'))
         return
       }
 
       const connections = Array.isArray(data) ? data : data.connections
 
       if (!Array.isArray(connections)) {
-        window.alert('Invalid import file: connections array not found.')
+        window.alert(this.$t('settings.invalidImportConnections'))
         return
       }
 
-      if (!window.confirm(`Import ${connections.length} connection(s)? This will replace the current connection list.`)) {
+      if (!window.confirm(this.$t('settings.importConfirm', { count: connections.length }))) {
         return
       }
 
@@ -688,7 +704,7 @@ export default {
               status: 'disconnected'
             })
 
-            this.notify(`Can't connect to '${conn.name}': ${error}`, 'error-icon')
+            this.notify(this.$t('notifications.cannotConnect', { name: conn.name, error }), 'error-icon')
             resolve()
           })
         }
@@ -835,7 +851,7 @@ export default {
     showRunningInBackgroundNotification () {
       if (!this.runningInBackgroundNotificationShowed) {
         if (this.$store.state.Settings.settings.displayTrayMessageOnClose) {
-          this.notify('Program still running in the system tray')
+          this.notify(this.$t('notifications.trayStillRunning'))
 
           this.runningInBackgroundNotificationShowed = true
         }
@@ -859,13 +875,13 @@ export default {
     copyDebugOutput () {
       ipcRenderer.send('clipboard:write-text', this.debugOutput)
 
-      this.notify('Debug output copied to clipboard')
+      this.notify(this.$t('notifications.debugCopied'))
     },
 
     copySshCommand (conn) {
       ipcRenderer.send('clipboard:write-text', this.getSshCommand(conn))
 
-      this.notify('SSH command copied to clipboard')
+      this.notify(this.$t('notifications.sshCommandCopied'))
     },
 
     getSshCommand (conn) {
@@ -940,13 +956,13 @@ export default {
     statusLabel (conn) {
       switch (conn.status) {
         case 'connected':
-          return 'Connectee'
+          return this.$t('status.connected')
         case 'connecting':
-          return 'Connexion...'
+          return this.$t('status.connecting')
         case 'disconnecting':
-          return 'Deconnexion...'
+          return this.$t('status.disconnecting')
         default:
-          return 'Deconnectee'
+          return this.$t('status.disconnected')
       }
     }
   },
@@ -1059,6 +1075,7 @@ export default {
         { value: 'dark-classic', label: 'Classic dark' },
         { value: 'light-neutral', label: 'Classic light' }
       ],
+      localeOptions: supportedLocaleOptions,
       selectedConnectionUuid: null,
       draggedConnectionUuid: null,
       runningInBackgroundNotificationShowed: false,
@@ -1130,7 +1147,7 @@ export default {
         conn.pid = null
         conn.status = 'disconnected'
 
-        this.notify(`'${conn.name}' was disconnected due to a connection error.\nCheck your internet connection`, 'error-icon')
+        this.notify(this.$t('notifications.disconnectedError', { name: conn.name }), 'error-icon')
       }
     })
 
@@ -1147,14 +1164,14 @@ export default {
 
             ProcessManager.watch(process.pid)
 
-            this.notify(`'${conn.name}' tracked using alternative method`)
+            this.notify(this.$t('notifications.trackedAlternative', { name: conn.name }))
           }
         })
       } else {
         conn.pid = null
         conn.status = 'disconnected'
 
-        this.notify(`Process Timeout: Couldn't connect to '${conn.name}'`, 'error-icon')
+        this.notify(this.$t('notifications.processTimeout', { name: conn.name }), 'error-icon')
       }
     })
   }

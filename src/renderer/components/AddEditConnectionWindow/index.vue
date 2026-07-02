@@ -2,111 +2,107 @@
   <Window :title="title">
     <div class="wrap">
       <Tabs>
-        <Tab label="BASIC" active>
+        <Tab :label="$t('connectionForm.basic')" active>
           <div class="form-item">
-            <label>Name</label>
-            <input type="text" autofocus placeholder="eg. My development server 1" v-model="conn.name">
+            <label>{{ $t('connectionForm.name') }}</label>
+            <input type="text" autofocus :placeholder="$t('connectionForm.namePlaceholder')" v-model="conn.name">
           </div>
 
-          <h1 class="section-title">Connection</h1>
+          <h1 class="section-title">{{ $t('connectionForm.connection') }}</h1>
           <div class="form-row">
             <div class="form-item">
-              <label>IP/Host</label>
-              <input type="text" placeholder="eg. 127.0.0.1 or my.domain.com" v-model="conn.host">
+              <label>{{ $t('connectionForm.host') }}</label>
+              <input type="text" :placeholder="$t('connectionForm.hostPlaceholder')" v-model="conn.host">
             </div>
             <div class="form-item" style="flex: 0 0 80px">
-              <label>Port</label>
-              <input type="text" placeholder="eg. 22" v-model.number="conn.port">
+              <label>{{ $t('detail.port') }}</label>
+              <input type="text" :placeholder="$t('connectionForm.portPlaceholder')" v-model.number="conn.port">
             </div>
           </div>
           <div class="form-item">
-            <label>User</label>
-            <input type="text" placeholder="eg. root" v-model="conn.user">
+            <label>{{ $t('connectionForm.user') }}</label>
+            <input type="text" :placeholder="$t('connectionForm.userPlaceholder')" v-model="conn.user">
           </div>
           <div class="form-item">
-            <label>Authentication method</label>
+            <label>{{ $t('connectionForm.authMethod') }}</label>
             <select v-model="conn.authType" @change="authTypeChange">
-              <option value="key-file">Private Key</option>
-              <option value="key-file-passphrase">Private Key + Passphrase</option>
-              <option value="key-file-interactive">Private Key + PAM/OTP</option>
-              <option value="key-file-passphrase-interactive">Private Key + Passphrase + PAM/OTP</option>
-              <option value="password">Password</option>
-              <option value="password-ask">Password (ask on connect)</option>
-              <option value="interactive">PAM/OTP only (no key) [BETA]</option>
+              <option value="key-file">{{ $t('auth.keyFile') }}</option>
+              <option value="key-file-passphrase">{{ $t('auth.keyFilePassphrase') }}</option>
+              <option value="key-file-interactive">{{ $t('auth.keyFileInteractive') }}</option>
+              <option value="key-file-passphrase-interactive">{{ $t('auth.keyFilePassphraseInteractive') }}</option>
+              <option value="password">{{ $t('auth.password') }}</option>
+              <option value="password-ask">{{ $t('auth.passwordAsk') }}</option>
+              <option value="interactive">{{ $t('auth.interactive') }}</option>
               <!-- <option value="key-input" disabled>Private Key (input)</option> -->
             </select>
             <p class="auth-hint" v-if="conn.authType === 'interactive'">
               <Icon icon="info"/>
               <span>
-                Mode BETA pour les authentifications clavier-interactives sans clé privée (PAM, OTP, SSO challenge).<br />
-                Le système demandera une information de validation au moment de la connexion (mot de passe temporaire, code, etc.).
+                {{ $t('auth.interactiveHint') }}
               </span>
             </p>
             <p class="auth-hint" v-if="conn.authType === 'key-file-passphrase'">
               <Icon icon="info"/>
               <span>
-                Mode BETA: la passphrase de la clé privée sera demandée au démarrage de la connexion.<br />
-                La passphrase n’est pas sauvegardée dans la configuration.
+                {{ $t('auth.keyPassphraseHint') }}
               </span>
             </p>
             <p class="auth-hint" v-if="conn.authType === 'key-file-interactive'">
               <Icon icon="info"/>
               <span>
-                Mode BETA pour les serveurs qui demandent une clé privée puis un challenge PAM/OTP.<br />
-                Le code de vérification et le mot de passe seront demandés à la connexion.
+                {{ $t('auth.keyInteractiveHint') }}
               </span>
             </p>
             <p class="auth-hint" v-if="conn.authType === 'key-file-passphrase-interactive'">
               <Icon icon="info"/>
               <span>
-                Mode BETA pour les clés privées protégées par passphrase suivies d’un challenge PAM/OTP.<br />
-                La passphrase, le code de vérification et le mot de passe seront demandés à la connexion.
+                {{ $t('auth.keyPassphraseInteractiveHint') }}
               </span>
             </p>
           </div>
           <div v-show="conn.authType === 'password'" class="form-item">
-            <label>Password</label>
+            <label>{{ $t('connectionForm.password') }}</label>
             <input type="password" v-model="conn.password">
           </div>
           <div v-show="conn.authType === 'key-file' || conn.authType === 'key-file-passphrase' || conn.authType === 'key-file-interactive' || conn.authType === 'key-file-passphrase-interactive'" class="form-row">
             <div class="form-item">
-              <label>Key File</label>
-              <input type="text" placeholder="eg. C:\Users\me\.ssh\id_rsa" v-model="conn.keyFile">
+              <label>{{ $t('connectionForm.keyFile') }}</label>
+              <input type="text" :placeholder="$t('connectionForm.keyFilePlaceholder')" v-model="conn.keyFile">
             </div>
             <div class="form-item" style="flex: 0">
-              <button class="btn icon-btn" style="margin-top: 23px" @click="selectPrivateKey" v-tooltip="'Select private key'">
+              <button class="btn icon-btn" style="margin-top: 23px" @click="selectPrivateKey" v-tooltip="$t('connectionForm.selectPrivateKey')">
                 <Icon icon="openFolder"/>
               </button>
             </div>
           </div>
           <div v-show="conn.authType === 'key-input'" class="form-item">
-            <label>Key</label>
-            <textarea placeholder="eg. ssh-rsa AAAAB3Nz..." v-model="conn.key"></textarea>
+            <label>{{ $t('connectionForm.key') }}</label>
+            <textarea :placeholder="$t('connectionForm.keyPlaceholder')" v-model="conn.key"></textarea>
           </div>
 
-          <h1 class="section-title">Remote</h1>
+          <h1 class="section-title">{{ $t('connectionForm.remote') }}</h1>
           <div class="form-item">
-            <label>Path</label>
-            <input type="text" placeholder="eg. /home/john" v-model="conn.folder">
+            <label>{{ $t('connectionForm.path') }}</label>
+            <input type="text" :placeholder="$t('connectionForm.pathPlaceholder')" v-model="conn.folder">
           </div>
 
-          <h1 class="section-title">Local</h1>
+          <h1 class="section-title">{{ $t('connectionForm.local') }}</h1>
           <div class="form-item">
-            <label>Drive letter</label>
+            <label>{{ $t('connectionForm.driveLetter') }}</label>
             <select v-model="conn.mountPoint">
-              <option value="auto">Auto (next free letter)</option>
+              <option value="auto">{{ $t('connectionForm.autoDrive') }}</option>
               <option v-for="drive in drives" :value="drive + ':'" :key="drive">{{drive}}:</option>
             </select>
           </div>
         </Tab>
-        <Tab label="ADVANCED" class="advanced-tab">
+        <Tab :label="$t('connectionForm.advanced')" class="advanced-tab">
           <div class="form-item">
-            <SwitchLabel label="Connect on Startup" v-model="conn.advanced.connectOnStartup"/>
-            <SwitchLabel label="Try to Reconnect on Connection Loss" v-model="conn.advanced.reconnect"/>
+            <SwitchLabel :label="$t('connectionForm.connectOnStartup')" v-model="conn.advanced.connectOnStartup"/>
+            <SwitchLabel :label="$t('connectionForm.reconnect')" v-model="conn.advanced.reconnect"/>
           </div>
 
           <div class="form-item">
-            <SwitchLabel label="Custom Command Line params" v-model="conn.advanced.customCmdlOptionsEnabled"/>
+            <SwitchLabel :label="$t('connectionForm.customOptions')" v-model="conn.advanced.customCmdlOptionsEnabled"/>
 
             <CustomCmdlOptions v-model="conn.advanced.customCmdlOptions"/>
           </div>
@@ -114,8 +110,8 @@
       </Tabs>
 
       <div class="footer">
-        <button class="btn" @click="cancel">Cancel</button>
-        <button class="btn default" @click="save">Save</button>
+        <button class="btn" @click="cancel">{{ $t('common.cancel') }}</button>
+        <button class="btn default" @click="save">{{ $t('common.save') }}</button>
       </div>
     </div>
   </Window>
@@ -180,7 +176,7 @@ export default {
     return {
       isEditingMode: false,
 
-      title: 'Add Connection',
+      title: this.$t('connectionForm.addTitle'),
       drives: 'DEFGHIJKLMNOPQRSTUVWXYZ',
 
       conn: {
@@ -211,7 +207,7 @@ export default {
     if (this.$route.name === 'edit-connection') {
       this.isEditingMode = true
 
-      this.title = 'Edit Connection'
+      this.title = this.$t('connectionForm.editTitle')
 
       this.conn = this.$store.state.Data.connections.find(a => a.uuid === this.$route.params.uuid)
     }

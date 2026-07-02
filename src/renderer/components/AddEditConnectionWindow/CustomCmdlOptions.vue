@@ -8,7 +8,7 @@
           </select>
         </div>
         <div class="value" v-show="getOption(param.name).type !== 'bool'">
-          <input type="text" placeholder="Param value" v-model="param.value" :disabled="getOption(param.name).type === 'bool'" @input="emmitChanges">
+          <input type="text" :placeholder="$t('connectionForm.paramValue')" v-model="param.value" :disabled="getOption(param.name).type === 'bool'" @input="emmitChanges">
         </div>
         <div class="remove">
           <button @click="removeParam(param)">
@@ -22,10 +22,10 @@
       </div>
     </div>
 
-    <h1 v-if="modelValue.length === 0" class="no-data">No params added yet</h1>
+    <h1 v-if="modelValue.length === 0" class="no-data">{{ $t('connectionForm.noParams') }}</h1>
 
     <button @click="addParam" class="btn add-param" :disabled="hasEmptyParam">
-      <Icon icon="plus"/> Add param
+      <Icon icon="plus"/> {{ $t('connectionForm.addParam') }}
     </button>
   </div>
 </template>
@@ -78,7 +78,7 @@ export default {
         option = {
           name: '',
           type: 'string',
-          description: '(Select an option)'
+          description: this.$t('connectionForm.selectOption')
         }
       }
 

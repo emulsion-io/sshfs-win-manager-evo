@@ -1,38 +1,38 @@
 <template>
-  <Window title="Settings">
+  <Window :title="$t('settings.title')">
     <div class="wrap">
       <div class="form-item">
-        <label>SSHFS Binary</label>
-        <input type="text" autofocus placeholder="eg. C:\Program Files\SSHFS-Win\bin\sshfs-win.exe" v-model="form.sshfsBinary">
+        <label>{{ $t('settings.sshfsBinary') }}</label>
+        <input type="text" autofocus placeholder="C:\Program Files\SSHFS-Win\bin\sshfs.exe" v-model="form.sshfsBinary">
       </div>
 
       <div class="form-item">
-        <label>Process Timeout</label>
-        <input type="text" autofocus placeholder="Time in seconds" v-model.number="form.processTrackTimeout" style="width: 100px; text-align: right;">
+        <label>{{ $t('settings.processTimeout') }}</label>
+        <input type="text" autofocus :placeholder="$t('settings.timeInSeconds')" v-model.number="form.processTrackTimeout" style="width: 100px; text-align: right;">
       </div>
 
       <div class="form-item">
-        <label>Theme</label>
+        <label>{{ $t('settings.theme') }}</label>
         <select v-model="form.theme" @change="previewTheme(form.theme)">
           <option v-for="theme in themes" :key="theme.value" :value="theme.value">{{theme.label}}</option>
         </select>
       </div>
 
       <div class="form-item" style="margin: 10px 0">
-        <SwitchLabel label="Startup with Windows" v-model="form.startupWithOS"/>
-        <SwitchLabel label="Display system tray message on close" v-model="form.displayTrayMessageOnClose"/>
-        <SwitchLabel label="Show debug panel" v-model="form.showDebugPanel"/>
+        <SwitchLabel :label="$t('settings.startupWithOS')" v-model="form.startupWithOS"/>
+        <SwitchLabel :label="$t('settings.displayTrayMessageOnClose')" v-model="form.displayTrayMessageOnClose"/>
+        <SwitchLabel :label="$t('settings.showDebugPanel')" v-model="form.showDebugPanel"/>
       </div>
 
-      <h1 class="section-title">Connections</h1>
+      <h1 class="section-title">{{ $t('settings.connections') }}</h1>
       <div class="connection-tools">
-        <button class="btn" @click="exportConnections">Export JSON</button>
-        <button class="btn" @click="importConnections">Import JSON</button>
+        <button class="btn" @click="exportConnections">{{ $t('settings.exportJson') }}</button>
+        <button class="btn" @click="importConnections">{{ $t('settings.importJson') }}</button>
       </div>
 
       <div class="footer">
-        <button class="btn" @click="cancel">Cancel</button>
-        <button class="btn default" @click="save">OK</button>
+        <button class="btn" @click="cancel">{{ $t('common.cancel') }}</button>
+        <button class="btn default" @click="save">{{ $t('common.ok') }}</button>
       </div>
     </div>
   </Window>
@@ -43,6 +43,7 @@ import { ipcRenderer } from 'electron'
 
 import Window from '@/components/Window/index.vue'
 import SwitchLabel from '@/components/SwitchLabel.vue'
+import { defaultLocale, normalizeLocale } from '@/i18n/locales.js'
 
 const defaultSettings = {
   sshfsBinary: 'C:\\Program Files\\SSHFS-Win\\bin\\sshfs.exe',
@@ -50,7 +51,8 @@ const defaultSettings = {
   displayTrayMessageOnClose: true,
   processTrackTimeout: 15,
   showDebugPanel: false,
-  theme: 'dark-graphite'
+  theme: 'dark-graphite',
+  language: defaultLocale
 }
 
 function normalizeSettings (settings = {}) {
@@ -62,7 +64,8 @@ function normalizeSettings (settings = {}) {
     displayTrayMessageOnClose: typeof settings.displayTrayMessageOnClose === 'boolean' ? settings.displayTrayMessageOnClose : defaultSettings.displayTrayMessageOnClose,
     processTrackTimeout: Number(settings.processTrackTimeout) || defaultSettings.processTrackTimeout,
     showDebugPanel: typeof settings.showDebugPanel === 'boolean' ? settings.showDebugPanel : defaultSettings.showDebugPanel,
-    theme: settings.theme || defaultSettings.theme
+    theme: settings.theme || defaultSettings.theme,
+    language: normalizeLocale(settings.language)
   }
 }
 
@@ -140,7 +143,7 @@ export default {
       try {
         await ipcRenderer.invoke('connections:export', JSON.parse(JSON.stringify(payload)))
       } catch {
-        window.alert('Export failed. Please try again.')
+        window.alert(this.$t('settings.exportFailed'))
       }
     },
 
@@ -156,18 +159,18 @@ export default {
       try {
         data = JSON.parse(result.content)
       } catch {
-        window.alert('Invalid import file: JSON parsing failed.')
+        window.alert(this.$t('settings.invalidImportJson'))
         return
       }
 
       const connections = Array.isArray(data) ? data : data.connections
 
       if (!Array.isArray(connections)) {
-        window.alert('Invalid import file: connections array not found.')
+        window.alert(this.$t('settings.invalidImportConnections'))
         return
       }
 
-      if (!window.confirm(`Import ${connections.length} connection(s)? This will replace the current connection list.`)) {
+      if (!window.confirm(this.$t('settings.importConfirm', { count: connections.length }))) {
         return
       }
 
