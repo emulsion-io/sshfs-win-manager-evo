@@ -94,6 +94,7 @@
           <div class="form-item">
             <label>Drive letter</label>
             <select v-model="conn.mountPoint">
+              <option value="auto">Auto (next free letter)</option>
               <option v-for="drive in drives" :value="drive + ':'" :key="drive">{{drive}}:</option>
             </select>
           </div>
@@ -193,7 +194,7 @@ export default {
         password: '',
         keyFile: process.env.USERPROFILE + '\\.ssh\\id_rsa',
         key: '',
-        mountPoint: 'D:',
+        mountPoint: 'auto',
         status: 'disconnected',
         pid: 0,
         advanced: {

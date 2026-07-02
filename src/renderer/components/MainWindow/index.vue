@@ -1135,7 +1135,9 @@ export default {
     })
 
     ProcessManager.on('timeout', conn => {
-      if (fs.existsSync(conn.mountPoint)) {
+      const mountPoint = conn.mountPoint === 'auto' ? conn.preferredMountPoint : conn.mountPoint
+
+      if (fs.existsSync(mountPoint)) {
         ProcessManager.getLastSpawnedProcess().then(process => {
           let foundConnection = this.connections.find(i => i.pid === process.pid)
 

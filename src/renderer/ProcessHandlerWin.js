@@ -390,21 +390,24 @@ class ProcessHandlerWin {
 
   getFirstAvailableDriveLetter (preferredMountPoint = null) {
     return new Promise((resolve, reject) => {
-      exec(`wmic logicaldisk get name`, (err, stdout) => {
+      exec('powershell -NoProfile -NonInteractive -Command "Get-PSDrive -PSProvider FileSystem | Select-Object -ExpandProperty Name"', (err, stdout) => {
         const driveLetters = 'DEFGHIJKLMNOPQRSTUVWXYZ'.split('')
 
         if (!err) {
-          const drivers = stdout.toString().trim().split('\n').slice(1)
-            .map(i => i.substr(0, 1).toUpperCase())
-          const availableDriveLetters = driveLetters.filter(i => !drivers.includes(i))
+          const drives = stdout.toString().trim().split(/\r?\n/)
+            .map(i => i.trim().substr(0, 1).toUpperCase())
+            .filter(Boolean)
+          const availableDriveLetters = driveLetters.filter(i => !drives.includes(i))
 
           if (preferredMountPoint && availableDriveLetters.includes(preferredMountPoint.substr(0, 1))) {
             resolve(preferredMountPoint)
-          } else {
+          } else if (availableDriveLetters.length > 0) {
             resolve(availableDriveLetters[0] + ':')
+          } else {
+            reject(new Error('No available drive letter'))
           }
         } else {
-          reject(new Error('Process not found'))
+          reject(new Error('Unable to list drive letters'))
         }
       })
     })

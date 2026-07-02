@@ -10,6 +10,7 @@ SSHFS-Win Manager Evo est un fork modernisé de [SSHFS-Win Manager](https://gith
 - Gestion de plusieurs connexions avec favoris, recherche et tri.
 - Fiche détaillée par connexion avec statut, host, port, utilisateur, chemin distant et point de montage.
 - Icône personnalisable par connexion, affichée dans la liste et dans la fiche détail.
+- Attribution automatique d'une lettre de lecteur libre avec `Auto (next free letter)`.
 - Copie rapide d'une commande `ssh` équivalente pour ouvrir la connexion dans un terminal.
 - Import/export JSON des connexions.
 - Mode debug intégré avec logs de connexion.
@@ -91,7 +92,7 @@ npm run build:clean
 
 ## Notes importantes
 
-- Le montage automatique de lettre de lecteur n'est plus proposé : Windows et SSHFS-Win ne le gèrent plus de manière fiable dans les versions récentes.
+- Le mode `Auto (next free letter)` est géré par l'application : une vraie lettre libre est choisie avant le lancement de SSHFS-Win. L'application ne délègue pas la valeur `auto` à `sshfs.exe`.
 - Certaines authentifications interactives dépendent fortement de la configuration OpenSSH/PAM du serveur.
 - Pour les clés protégées par passphrase et les challenges PAM/OTP, l'application prépare les réponses avant de lancer SSHFS via `SSH_ASKPASS`.
 - Les images personnalisées de connexions sont stockées dans les données de configuration sous forme de data URL.
