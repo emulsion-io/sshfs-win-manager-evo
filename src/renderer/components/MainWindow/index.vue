@@ -1705,7 +1705,7 @@ export default {
   padding: 12px 14px;
   border: 1px solid var(--app-border);
   border-radius: 8px;
-  background: var(--app-panel);
+  background: var(--app-surface-raised, var(--app-surface, #2b3038));
   color: var(--app-text);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
   line-height: 1.45;
@@ -1715,7 +1715,7 @@ export default {
 
 .app-toast.error {
   border-color: color-mix(in srgb, #ff6b6b 60%, var(--app-border));
-  background: color-mix(in srgb, #ff6b6b 14%, var(--app-panel));
+  background: color-mix(in srgb, #ff6b6b 14%, var(--app-surface-raised, var(--app-surface, #2b3038)));
 }
 
 .main-shell.compact-mode {
