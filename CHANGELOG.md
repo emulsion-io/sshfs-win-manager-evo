@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.1
+
+- Ajout d'une action `Open` dans le menu de la zone de notification.
+
 ## 2.4.0
 
 - Préparation multi-OS :

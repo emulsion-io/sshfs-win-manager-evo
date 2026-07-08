@@ -375,6 +375,15 @@ if (isSecondInstance) {
 
     const trayMenu = Menu.buildFromTemplate([
       {
+        label: 'Open',
+        click () {
+          showMainWindow()
+        }
+      },
+      {
+        type: 'separator'
+      },
+      {
         label: 'Quit',
         click () {
           mainWindow.webContents.send('terminate-child-processes')
