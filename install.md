@@ -15,6 +15,12 @@ sudo apt install sshfs fuse3
 
 Sur certaines versions, `sshfs` installe deja la dependance FUSE necessaire. Garder `fuse3` dans la commande rend le prerequis explicite.
 
+Pour construire les paquets Linux depuis Debian, Ubuntu ou Linux Mint, installer aussi `rpm` :
+
+```bash
+sudo apt install rpm
+```
+
 ### Fedora
 
 ```bash

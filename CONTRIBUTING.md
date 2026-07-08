@@ -23,6 +23,26 @@ npm -v
 
 Les dependances actuelles demandent Node `^22.18.0` ou `>=24.11.0`. Sur Ubuntu, le Node fourni par les depots APT peut etre trop ancien.
 
+Si `nvm` n'est pas installe sur Linux ou macOS :
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
+```
+
+Fermer puis rouvrir le terminal, ou charger `nvm` dans le shell courant :
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+```
+
+Puis relancer :
+
+```bash
+nvm install
+nvm use
+```
+
 Pour installer les prerequis SSHFS par systeme, voir [install.md](install.md).
 
 Resume rapide :
@@ -173,6 +193,12 @@ Points a traiter avant publication stable :
 - tester les paquets Linux sur plusieurs distributions ;
 - tester le build macOS sur une machine macOS, idealement Intel et Apple Silicon ;
 - prevoir signature et notarization si l'application doit etre distribuee hors developpement local.
+
+Sur Debian, Ubuntu ou Linux Mint, la cible `rpm` demande l'outil systeme `rpm` :
+
+```bash
+sudo apt install rpm
+```
 
 ## Generer les icones
 

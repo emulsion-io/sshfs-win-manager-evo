@@ -33,6 +33,7 @@
   "build": {
     "productName": "SSHFS-Win Manager Evo",
     "appId": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
+    "desktopName": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
     "artifactName": "sshfs-win-manager-evo-v${version}-${os}-${arch}.${ext}",
     "nsis": {
       "oneClick": true,
@@ -61,6 +62,7 @@
     "linux": {
       "icon": "build/icons/sshfs-evo-logo-512.png",
       "category": "Utility",
+      "syncDesktopName": true,
       "target": [
         "AppImage",
         "deb",
