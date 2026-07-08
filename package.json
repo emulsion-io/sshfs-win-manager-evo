@@ -7,6 +7,7 @@
   ],
   "description": "A GUI for SSHFS-Win (https://github.com/billziss-gh/sshfs-win)",
   "license": "MIT",
+  "desktopName": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
   "main": "./out/main/index.js",
   "engines": {
     "node": "^22.18.0 || >=24.11.0",
@@ -33,7 +34,6 @@
   "build": {
     "productName": "SSHFS-Win Manager Evo",
     "appId": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
-    "desktopName": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
     "artifactName": "sshfs-win-manager-evo-v${version}-${os}-${arch}.${ext}",
     "nsis": {
       "oneClick": true,
