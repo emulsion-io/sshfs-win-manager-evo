@@ -26,7 +26,7 @@
     </div>
 
     <div class="controls">
-      <button v-show="isConnected" @click="$emit('open', conn.mountPoint === 'auto' ? conn.preferredMountPoint : conn.mountPoint)">
+      <button v-show="isConnected" @click="$emit('open', mountPointLabel)">
         <Icon icon="openFolder"/>
       </button>
 
@@ -57,6 +57,7 @@
 
 <script>
 import Icon from '@/components/Icon.vue'
+import { getConnectionMountPoint } from '@/platform/index.js'
 
 export default {
   name: 'connection-item',
@@ -104,13 +105,9 @@ export default {
     },
 
     mountPointLabel () {
-      if (this.isConnected && this.conn.mountPoint === 'auto') {
-        return `Auto (${this.conn.preferredMountPoint})`
-      } else if (this.conn.mountPoint === 'auto') {
-        return 'Auto'
-      } else {
-        return this.conn.mountPoint
-      }
+      const mountPoint = getConnectionMountPoint(this.conn)
+
+      return mountPoint === 'auto' ? 'Auto' : mountPoint
     }
   }
 }

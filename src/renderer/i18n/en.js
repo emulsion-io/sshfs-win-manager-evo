@@ -143,6 +143,8 @@ export default {
     driveLetter: 'Drive letter',
     mountPath: 'Mount path',
     mountPathPlaceholder: 'e.g. /home/me/mounts/server',
+    selectMountPath: 'Select mount folder',
+    autoMountPath: 'Empty = auto: {path}',
     autoDrive: 'Auto (next free letter)',
     connectOnStartup: 'Connect on startup',
     reconnect: 'Try to reconnect on connection loss',

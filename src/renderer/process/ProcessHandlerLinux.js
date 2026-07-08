@@ -1,9 +1,9 @@
 import { execFile, spawn } from 'child_process'
-import { basename, dirname, join } from 'path'
+import { dirname, join } from 'path'
 import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 
-import { currentPlatform } from '@/platform/index.js'
+import { currentPlatform, getAutoMountPoint, getConnectionMountPoint } from '@/platform/index.js'
 
 class ProcessHandlerLinux {
   constructor (settings) {
@@ -13,10 +13,11 @@ class ProcessHandlerLinux {
 
   create (conn) {
     return new Promise(async (resolve, reject) => {
+      const sshfsBinary = this.getSshfsBinary()
       let mountPoint = conn.mountPoint
 
       if (mountPoint === 'auto' || !String(mountPoint || '').trim()) {
-        mountPoint = this.getAutoMountPoint(conn)
+        mountPoint = getAutoMountPoint(conn)
         conn.preferredMountPoint = mountPoint
       }
 
@@ -38,8 +39,8 @@ class ProcessHandlerLinux {
         '-oUserKnownHostsFile=/dev/null'
       ]
 
-      if (this.settings.sshfsBinary.includes('/') && !existsSync(this.settings.sshfsBinary)) {
-        reject(new Error(`SSHFS binary not found at "${this.settings.sshfsBinary}". Check your settings`))
+      if (sshfsBinary.includes('/') && !existsSync(sshfsBinary)) {
+        reject(new Error(this.getMissingBinaryError(sshfsBinary)))
         return
       }
 
@@ -63,12 +64,7 @@ class ProcessHandlerLinux {
       } else {
         cmdArgs = [
           ...cmdArgs,
-          ...[
-            '-oidmap=user',
-            '-oreconnect',
-            '-oServerAliveInterval=15',
-            '-oServerAliveCountMax=3'
-          ]
+          ...this.getDefaultMountOptions(conn)
         ]
       }
 
@@ -122,11 +118,11 @@ class ProcessHandlerLinux {
       console.log('date:', new Date().toISOString())
       console.log('conn:', `{${conn.uuid}}`, `(${conn.name})`)
       console.log('conntype:', conn.authType)
-      console.log('cmd:', `"${this.settings.sshfsBinary}" ${cmdArgs.join(' ')}`)
+      console.log('cmd:', `"${sshfsBinary}" ${cmdArgs.join(' ')}`)
 
       const askpass = this.createAskpassScript(conn)
-      const binaryDir = this.settings.sshfsBinary.includes('/') ? dirname(this.settings.sshfsBinary) : ''
-      const childProcess = spawn(this.settings.sshfsBinary, cmdArgs, {
+      const binaryDir = sshfsBinary.includes('/') ? dirname(sshfsBinary) : ''
+      const childProcess = spawn(sshfsBinary, cmdArgs, {
         env: {
           ...globalThis.process.env,
           PATH: binaryDir
@@ -327,11 +323,17 @@ class ProcessHandlerLinux {
     return sanitizedHost
   }
 
-  terminate (pid) {
+  terminate (pid, conn = null) {
     return new Promise(resolve => {
-      execFile('kill', ['-TERM', String(pid)], () => {
-        resolve()
-      })
+      const mountPoint = conn ? getConnectionMountPoint(conn) : null
+
+      this.unmount(mountPoint)
+        .then(() => resolve())
+        .catch(() => {
+          execFile('kill', ['-TERM', String(pid)], () => {
+            resolve()
+          })
+        })
     })
   }
 
@@ -354,19 +356,76 @@ class ProcessHandlerLinux {
     return Promise.reject(new Error('Process not found'))
   }
 
-  getAutoMountPoint (conn) {
-    const baseName = this.slugify(conn.name || conn.host || conn.uuid || 'connection')
-    return join(currentPlatform.autoMountRoot, baseName)
+  getSshfsBinary () {
+    const configuredBinary = this.settings.sshfsBinary || currentPlatform.sshfsBinary
+
+    if (!configuredBinary.includes('/') || existsSync(configuredBinary)) {
+      return configuredBinary
+    }
+
+    return this.getSshfsBinaryCandidates().find(candidate => existsSync(candidate)) || configuredBinary
   }
 
-  slugify (value) {
-    const slug = String(value)
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
+  getSshfsBinaryCandidates () {
+    return [
+      currentPlatform.sshfsBinary,
+      '/usr/bin/sshfs',
+      '/bin/sshfs'
+    ].filter((candidate, index, candidates) => candidate && candidates.indexOf(candidate) === index)
+  }
 
-    return slug || basename(`connection-${Date.now()}`)
+  getMissingBinaryError (sshfsBinary) {
+    return `SSHFS binary not found at "${sshfsBinary}". Check your settings`
+  }
+
+  getDefaultMountOptions () {
+    return [
+      '-oidmap=user',
+      '-oreconnect',
+      '-oServerAliveInterval=15',
+      '-oServerAliveCountMax=3'
+    ]
+  }
+
+  async unmount (mountPoint) {
+    if (!mountPoint || mountPoint === 'auto') {
+      throw new Error('Mount point not available')
+    }
+
+    const commands = this.getUnmountCommands(mountPoint)
+    let lastError = null
+
+    for (const command of commands) {
+      try {
+        await this.execFileQuiet(command.file, command.args)
+        return
+      } catch (error) {
+        lastError = error
+      }
+    }
+
+    throw lastError || new Error(`Unable to unmount "${mountPoint}"`)
+  }
+
+  getUnmountCommands (mountPoint) {
+    return [
+      { file: 'fusermount3', args: ['-u', mountPoint] },
+      { file: 'fusermount', args: ['-u', mountPoint] },
+      { file: 'umount', args: [mountPoint] }
+    ]
+  }
+
+  execFileQuiet (file, args) {
+    return new Promise((resolve, reject) => {
+      execFile(file, args, error => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
   }
 }
 

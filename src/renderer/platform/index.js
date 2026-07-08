@@ -27,10 +27,11 @@ const platformProfiles = {
     id: 'darwin',
     name: 'macOS',
     sshfsBinary: '/opt/homebrew/bin/sshfs',
+    sshfsBinaryAlternatives: ['/usr/local/bin/sshfs', '/usr/bin/sshfs'],
     defaultKeyFile: path.join(homeDir || process.env.HOME || '', '.ssh', 'id_rsa'),
     mountMode: 'path',
     pathListSeparator: ':',
-    autoMountRoot: path.join(homeDir || process.env.HOME || '', 'sshfs-win-manager-evo')
+    autoMountRoot: path.join(homeDir || process.env.HOME || '', 'Mounts', 'sshfs-win-manager-evo')
   }
 }
 
@@ -52,8 +53,39 @@ function usesDriveLetters () {
   return currentPlatform.mountMode === 'drive-letter'
 }
 
+function slugifyMountName (value) {
+  const slug = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  return slug || `connection-${Date.now()}`
+}
+
+function getAutoMountPoint (conn = {}) {
+  if (!currentPlatform.autoMountRoot) {
+    return 'auto'
+  }
+
+  return path.join(
+    currentPlatform.autoMountRoot,
+    slugifyMountName(conn.name || conn.host || conn.uuid || 'connection')
+  )
+}
+
+function getConnectionMountPoint (conn = {}) {
+  if (conn.mountPoint === 'auto' || !String(conn.mountPoint || '').trim()) {
+    return conn.preferredMountPoint || getAutoMountPoint(conn)
+  }
+
+  return conn.mountPoint
+}
+
 export {
   currentPlatform,
+  getAutoMountPoint,
+  getConnectionMountPoint,
   isWindows,
   usesDriveLetters
 }

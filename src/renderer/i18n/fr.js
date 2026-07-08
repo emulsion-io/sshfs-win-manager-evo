@@ -143,6 +143,8 @@ export default {
     driveLetter: 'Lettre de lecteur',
     mountPath: 'Chemin de montage',
     mountPathPlaceholder: 'ex. /home/moi/montages/serveur',
+    selectMountPath: 'Sélectionner le dossier de montage',
+    autoMountPath: 'Vide = auto : {path}',
     autoDrive: 'Auto (prochaine lettre libre)',
     connectOnStartup: 'Connexion au démarrage',
     reconnect: 'Reconnexion si la connexion est perdue',

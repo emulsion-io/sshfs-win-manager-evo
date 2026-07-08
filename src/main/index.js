@@ -170,6 +170,16 @@ ipcMain.handle('dialog:select-private-key', async () => {
   return result.canceled ? null : result.filePaths[0]
 })
 
+ipcMain.handle('dialog:select-mount-path', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Select mount folder',
+    properties: ['openDirectory', 'createDirectory'],
+    defaultPath: app.getPath('home')
+  })
+
+  return result.canceled ? null : result.filePaths[0]
+})
+
 ipcMain.handle('dialog:select-connection-icon', async () => {
   const result = await dialog.showOpenDialog({
     title: 'Select connection icon',

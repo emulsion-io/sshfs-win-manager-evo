@@ -96,7 +96,17 @@
           </div>
           <div v-else class="form-item">
             <label>{{ $t('connectionForm.mountPath') }}</label>
-            <input type="text" :placeholder="$t('connectionForm.mountPathPlaceholder')" v-model="conn.mountPoint">
+            <div class="form-row">
+              <div class="form-item">
+                <input type="text" :placeholder="$t('connectionForm.mountPathPlaceholder')" v-model="conn.mountPoint">
+              </div>
+              <div class="form-item" style="flex: 0">
+                <button class="btn icon-btn" @click="selectMountPath" v-tooltip="$t('connectionForm.selectMountPath')">
+                  <Icon icon="openFolder"/>
+                </button>
+              </div>
+            </div>
+            <p class="mount-hint">{{ $t('connectionForm.autoMountPath', { path: autoMountPath }) }}</p>
           </div>
         </Tab>
         <Tab :label="$t('connectionForm.advanced')" class="advanced-tab">
@@ -132,7 +142,7 @@ import SwitchLabel from '@/components/SwitchLabel.vue'
 import CustomCmdlOptions from './CustomCmdlOptions.vue'
 import Icon from '../Icon.vue'
 import SecretManager from '@/SecretManager.js'
-import { currentPlatform, usesDriveLetters } from '@/platform/index.js'
+import { currentPlatform, getAutoMountPoint, usesDriveLetters } from '@/platform/index.js'
 
 export default {
   name: 'add-edit-connection-window',
@@ -182,6 +192,14 @@ export default {
 
       if (file) {
         this.conn.keyFile = file
+      }
+    },
+
+    async selectMountPath () {
+      const directory = await ipcRenderer.invoke('dialog:select-mount-path')
+
+      if (directory) {
+        this.conn.mountPoint = directory
       }
     },
 
@@ -275,6 +293,12 @@ export default {
     }
   },
 
+  computed: {
+    autoMountPath () {
+      return getAutoMountPoint(this.conn)
+    }
+  },
+
   mounted () {
     if (this.$route.name === 'edit-connection') {
       this.isEditingMode = true
@@ -364,6 +388,13 @@ export default {
     fill: var(--app-primary);
     flex: 0 0 15px;
     margin-top: 2px;
+  }
+
+  .mount-hint {
+    margin: 8px 0 0;
+    color: var(--app-muted);
+    font-size: 12px;
+    line-height: 1.35;
   }
 }
 </style>

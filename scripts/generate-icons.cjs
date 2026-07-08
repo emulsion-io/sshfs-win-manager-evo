@@ -11,6 +11,15 @@ const errorSvgPath = path.join(buildIconsDir, 'sshfs-evo-error-logo.svg')
 const pngSizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024]
 const appIcoSizes = [16, 24, 32, 48, 64, 128, 256]
 const trayIcoSizes = [16, 24, 32]
+const icnsTypes = [
+  { type: 'icp4', size: 16 },
+  { type: 'icp5', size: 32 },
+  { type: 'icp6', size: 64 },
+  { type: 'ic07', size: 128 },
+  { type: 'ic08', size: 256 },
+  { type: 'ic09', size: 512 },
+  { type: 'ic10', size: 1024 }
+]
 
 function ensureDir (dir) {
   fs.mkdirSync(dir, { recursive: true })
@@ -61,6 +70,29 @@ function writeIco (outputPath, images) {
   fs.writeFileSync(outputPath, buffer)
 }
 
+function writeIcns (outputPath, entries) {
+  const headerSize = 8
+  const totalSize = headerSize + entries.reduce((sum, entry) => sum + 8 + entry.bytes.length, 0)
+  const buffer = Buffer.alloc(totalSize)
+
+  let cursor = 0
+  buffer.write('icns', cursor)
+  cursor += 4
+  buffer.writeUInt32BE(totalSize, cursor)
+  cursor += 4
+
+  entries.forEach(entry => {
+    buffer.write(entry.type, cursor)
+    cursor += 4
+    buffer.writeUInt32BE(entry.bytes.length + 8, cursor)
+    cursor += 4
+    entry.bytes.copy(buffer, cursor)
+    cursor += entry.bytes.length
+  })
+
+  fs.writeFileSync(outputPath, buffer)
+}
+
 async function renderPng (size, outputPath, inputPath = sourceSvgPath) {
   const bytes = await sharp(inputPath, { density: 384 })
     .resize(size, size, {
@@ -93,6 +125,25 @@ async function renderIcoImages (sizes) {
   return images
 }
 
+async function renderIcnsEntries () {
+  const entries = []
+
+  for (const item of icnsTypes) {
+    entries.push({
+      type: item.type,
+      bytes: await sharp(sourceSvgPath, { density: 384 })
+        .resize(item.size, item.size, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png()
+        .toBuffer()
+    })
+  }
+
+  return entries
+}
+
 async function main () {
   if (!fs.existsSync(sourceSvgPath)) {
     throw new Error(`Icon source not found: ${sourceSvgPath}`)
@@ -118,10 +169,12 @@ async function main () {
 
   const appIcoImages = await renderIcoImages(appIcoSizes)
   const trayIcoImages = await renderIcoImages(trayIcoSizes)
+  const icnsEntries = await renderIcnsEntries()
 
   writeIco(path.join(buildIconsDir, 'sshfs-evo-logo.ico'), appIcoImages)
   writeIco(path.join(buildIconsDir, 'app-icon.ico'), appIcoImages)
   writeIco(path.join(buildIconsDir, 'setup-icon.ico'), appIcoImages)
+  writeIcns(path.join(buildIconsDir, 'app-icon.icns'), icnsEntries)
   writeIco(path.join(staticDir, 'app-icon.ico'), appIcoImages)
   writeIco(path.join(staticDir, 'tray-icon.ico'), trayIcoImages)
 

@@ -11,6 +11,12 @@
   "scripts": {
     "build": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder",
     "build:dir": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --dir",
+    "build:dir:win": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --win --dir",
+    "build:dir:linux": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --linux --dir",
+    "build:dir:mac": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --mac --dir",
+    "build:win": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --win",
+    "build:linux": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --linux",
+    "build:mac": "npm run build:clean-output && node scripts/run-electron-vite.cjs build && electron-builder --mac",
     "build:clean": "rimraf out dist/electron dist/web",
     "build:clean-output": "node scripts/clean-build-output.cjs",
     "icons:generate": "node scripts/generate-icons.cjs",
@@ -23,7 +29,7 @@
   "build": {
     "productName": "SSHFS-Win Manager Evo",
     "appId": "dev.fabricesimonet.apps.sshfs-win-manager-evo",
-    "artifactName": "sshfs-win-manager-evo-setup-v${version}.${ext}",
+    "artifactName": "sshfs-win-manager-evo-v${version}-${os}-${arch}.${ext}",
     "nsis": {
       "oneClick": true,
       "installerIcon": "build/icons/setup-icon.ico",
@@ -42,7 +48,32 @@
       }
     ],
     "win": {
-      "icon": "build/icons/app-icon.ico"
+      "icon": "build/icons/app-icon.ico",
+      "artifactName": "sshfs-win-manager-evo-setup-v${version}.${ext}",
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "icon": "build/icons/sshfs-evo-logo-512.png",
+      "category": "Utility",
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "maintainer": "Fabrice Simonet <fabrice@emulsion.io>"
+    },
+    "mac": {
+      "icon": "build/icons/app-icon.icns",
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "dmg": {
+      "artifactName": "sshfs-win-manager-evo-v${version}-${arch}.${ext}"
     }
   },
   "dependencies": {

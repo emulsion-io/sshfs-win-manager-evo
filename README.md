@@ -71,12 +71,14 @@ Important : si la passkey est perdue, les mots de passe chiffrés ne peuvent pas
 
 ## Prérequis
 
-Avant d'utiliser l'application, installez :
+Avant d'utiliser l'application sous Windows, installez :
 
 - [WinFsp](https://winfsp.dev/)
 - [SSHFS-Win](https://github.com/billziss-gh/sshfs-win)
 
 SSHFS-Win Manager Evo ne remplace pas SSHFS-Win : il fournit l'interface graphique et pilote `sshfs.exe`.
+
+Pour preparer un test sous Linux ou macOS, consultez [install.md](install.md).
 
 ## Installation
 

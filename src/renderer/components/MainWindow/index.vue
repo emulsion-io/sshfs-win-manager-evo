@@ -129,7 +129,7 @@
                     class="round-action open-folder"
                     :disabled="conn.status !== 'connected'"
                     v-tooltip="$t('common.openFolder')"
-                    @click.stop="openLocal(conn.mountPoint === 'auto' ? conn.preferredMountPoint : conn.mountPoint)"
+                    @click.stop="openLocal(getLocalMountPath(conn))"
                   >
                     <Icon icon="openFolder"/>
                   </button>
@@ -426,7 +426,7 @@
                 class="action-button"
                 type="button"
                 :disabled="selectedConnection.status !== 'connected'"
-                @click="openLocal(selectedConnection.mountPoint === 'auto' ? selectedConnection.preferredMountPoint : selectedConnection.mountPoint)"
+                @click="openLocal(getLocalMountPath(selectedConnection))"
               >
                 <Icon icon="openFolder"/>
                 {{ $t('common.openFolder') }}
@@ -485,7 +485,7 @@ import SecretManager from '@/SecretManager.js'
 import { setLocale } from '@/i18n/index.js'
 import { supportedLocaleOptions } from '@/i18n/locales.js'
 import { defaultSettings, normalizeSettings } from '@/store/SettingsDefaults.js'
-import { currentPlatform } from '@/platform/index.js'
+import { currentPlatform, getConnectionMountPoint } from '@/platform/index.js'
 
 import Window from '@/components/Window/index.vue'
 import Icon from '@/components/Icon.vue'
@@ -1140,7 +1140,7 @@ export default {
 
       conn.status = 'disconnecting'
 
-      ProcessManager.terminate(conn.pid).then(() => {
+      ProcessManager.terminate(conn.pid, conn).then(() => {
         conn.status = 'disconnected'
 
         this.updateConnectionList()
@@ -1155,6 +1155,10 @@ export default {
       if (path) {
         ipcRenderer.invoke('shell:open-path', path)
       }
+    },
+
+    getLocalMountPath (conn) {
+      return getConnectionMountPoint(conn)
     },
 
     addNewConnection () {
@@ -1352,15 +1356,9 @@ export default {
     },
 
     mountPointLabel (conn) {
-      if (conn.status === 'connected' && conn.mountPoint === 'auto') {
-        return conn.preferredMountPoint || 'Auto'
-      }
+      const mountPoint = getConnectionMountPoint(conn)
 
-      if (conn.mountPoint === 'auto') {
-        return conn.preferredMountPoint || 'Auto'
-      }
-
-      return conn.mountPoint || 'Auto'
+      return mountPoint === 'auto' ? 'Auto' : (mountPoint || 'Auto')
     },
 
     statusLabel (conn) {
@@ -1631,7 +1629,7 @@ export default {
     })
 
     ProcessManager.on('timeout', conn => {
-      const mountPoint = conn.mountPoint === 'auto' ? conn.preferredMountPoint : conn.mountPoint
+      const mountPoint = getConnectionMountPoint(conn)
 
       if (fs.existsSync(mountPoint)) {
         ProcessManager.getLastSpawnedProcess().then(process => {
