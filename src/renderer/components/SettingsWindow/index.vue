@@ -3,7 +3,7 @@
     <div class="wrap">
       <div class="form-item">
         <label>{{ $t('settings.sshfsBinary') }}</label>
-        <input type="text" autofocus placeholder="C:\Program Files\SSHFS-Win\bin\sshfs.exe" v-model="form.sshfsBinary">
+        <input type="text" autofocus :placeholder="sshfsBinaryPlaceholder" v-model="form.sshfsBinary">
       </div>
 
       <div class="form-item">
@@ -45,31 +45,8 @@ import { ipcRenderer } from 'electron'
 
 import Window from '@/components/Window/index.vue'
 import SwitchLabel from '@/components/SwitchLabel.vue'
-import { defaultLocale, normalizeLocale } from '@/i18n/locales.js'
-
-const defaultSettings = {
-  sshfsBinary: 'C:\\Program Files\\SSHFS-Win\\bin\\sshfs.exe',
-  startupWithOS: true,
-  displayTrayMessageOnClose: true,
-  processTrackTimeout: 15,
-  showDebugPanel: false,
-  theme: 'dark-graphite',
-  language: defaultLocale
-}
-
-function normalizeSettings (settings = {}) {
-  return {
-    ...defaultSettings,
-    ...settings,
-    sshfsBinary: settings.sshfsBinary || defaultSettings.sshfsBinary,
-    startupWithOS: typeof settings.startupWithOS === 'boolean' ? settings.startupWithOS : defaultSettings.startupWithOS,
-    displayTrayMessageOnClose: typeof settings.displayTrayMessageOnClose === 'boolean' ? settings.displayTrayMessageOnClose : defaultSettings.displayTrayMessageOnClose,
-    processTrackTimeout: Number(settings.processTrackTimeout) || defaultSettings.processTrackTimeout,
-    showDebugPanel: typeof settings.showDebugPanel === 'boolean' ? settings.showDebugPanel : defaultSettings.showDebugPanel,
-    theme: settings.theme || defaultSettings.theme,
-    language: normalizeLocale(settings.language)
-  }
-}
+import { defaultSettings, normalizeSettings } from '@/store/SettingsDefaults.js'
+import { currentPlatform } from '@/platform/index.js'
 
 export default {
   name: 'settings-window',
@@ -77,6 +54,12 @@ export default {
   components: {
     Window,
     SwitchLabel
+  },
+
+  computed: {
+    sshfsBinaryPlaceholder () {
+      return currentPlatform.sshfsBinary
+    }
   },
 
   methods: {

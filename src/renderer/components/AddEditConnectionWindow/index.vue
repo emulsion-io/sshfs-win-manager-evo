@@ -87,12 +87,16 @@
           </div>
 
           <h1 class="section-title">{{ $t('connectionForm.local') }}</h1>
-          <div class="form-item">
+          <div v-if="usesDriveLetters" class="form-item">
             <label>{{ $t('connectionForm.driveLetter') }}</label>
             <select v-model="conn.mountPoint">
               <option value="auto">{{ $t('connectionForm.autoDrive') }}</option>
               <option v-for="drive in drives" :value="drive + ':'" :key="drive">{{drive}}:</option>
             </select>
+          </div>
+          <div v-else class="form-item">
+            <label>{{ $t('connectionForm.mountPath') }}</label>
+            <input type="text" :placeholder="$t('connectionForm.mountPathPlaceholder')" v-model="conn.mountPoint">
           </div>
         </Tab>
         <Tab :label="$t('connectionForm.advanced')" class="advanced-tab">
@@ -128,6 +132,7 @@ import SwitchLabel from '@/components/SwitchLabel.vue'
 import CustomCmdlOptions from './CustomCmdlOptions.vue'
 import Icon from '../Icon.vue'
 import SecretManager from '@/SecretManager.js'
+import { currentPlatform, usesDriveLetters } from '@/platform/index.js'
 
 export default {
   name: 'add-edit-connection-window',
@@ -150,6 +155,10 @@ export default {
       this.conn.advanced.customCmdlOptions =
         this.conn.advanced.customCmdlOptions.filter(a => a.name !== '')
 
+      if (!this.usesDriveLetters && !String(this.conn.mountPoint || '').trim()) {
+        this.conn.mountPoint = 'auto'
+      }
+
       if (!await this.prepareSecretsBeforeSave()) {
         return
       }
@@ -165,7 +174,7 @@ export default {
 
     authTypeChange () {
       this.conn.password = ''
-      this.conn.keyFile = process.env.USERPROFILE + '\\.ssh\\id_rsa'
+      this.conn.keyFile = currentPlatform.defaultKeyFile
     },
 
     async selectPrivateKey () {
@@ -239,6 +248,7 @@ export default {
 
       title: this.$t('connectionForm.addTitle'),
       drives: 'DEFGHIJKLMNOPQRSTUVWXYZ',
+      usesDriveLetters: usesDriveLetters(),
 
       conn: {
         uuid: uuid(),
@@ -250,9 +260,9 @@ export default {
         authType: 'password',
         password: '',
         secrets: {},
-        keyFile: process.env.USERPROFILE + '\\.ssh\\id_rsa',
+        keyFile: currentPlatform.defaultKeyFile,
         key: '',
-        mountPoint: 'auto',
+        mountPoint: usesDriveLetters() ? 'auto' : '',
         status: 'disconnected',
         pid: 0,
         advanced: {
@@ -274,6 +284,10 @@ export default {
       this.conn = JSON.parse(JSON.stringify(this.$store.state.Data.connections.find(a => a.uuid === this.$route.params.uuid)))
       this.conn.password = ''
       this.conn.secrets = this.conn.secrets || {}
+
+      if (!this.usesDriveLetters && this.conn.mountPoint === 'auto') {
+        this.conn.mountPoint = ''
+      }
     }
   }
 }

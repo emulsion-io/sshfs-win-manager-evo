@@ -141,6 +141,8 @@ export default {
     pathPlaceholder: 'e.g. /home/john',
     local: 'Local',
     driveLetter: 'Drive letter',
+    mountPath: 'Mount path',
+    mountPathPlaceholder: 'e.g. /home/me/mounts/server',
     autoDrive: 'Auto (next free letter)',
     connectOnStartup: 'Connect on startup',
     reconnect: 'Try to reconnect on connection loss',

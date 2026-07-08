@@ -188,7 +188,7 @@
           <div class="settings-grid">
             <label class="field">
               <span>{{ $t('settings.sshfsBinary') }}</span>
-              <input v-model="settingsForm.sshfsBinary" type="text" placeholder="C:\Program Files\SSHFS-Win\bin\sshfs.exe">
+              <input v-model="settingsForm.sshfsBinary" type="text" :placeholder="sshfsBinaryPlaceholder">
             </label>
 
             <label class="field compact">
@@ -483,23 +483,12 @@ import { v4 as uuid } from 'uuid'
 import ProcessManager from '@/ProcessManager.js'
 import SecretManager from '@/SecretManager.js'
 import { setLocale } from '@/i18n/index.js'
-import { defaultLocale, normalizeLocale, supportedLocaleOptions } from '@/i18n/locales.js'
+import { supportedLocaleOptions } from '@/i18n/locales.js'
+import { defaultSettings, normalizeSettings } from '@/store/SettingsDefaults.js'
+import { currentPlatform } from '@/platform/index.js'
 
 import Window from '@/components/Window/index.vue'
 import Icon from '@/components/Icon.vue'
-
-const defaultSettings = {
-  sshfsBinary: 'C:\\Program Files\\SSHFS-Win\\bin\\sshfs.exe',
-  startupWithOS: true,
-  displayTrayMessageOnClose: true,
-  processTrackTimeout: 15,
-  showDebugPanel: false,
-  compactMode: false,
-  demoMode: false,
-  passkeyRetention: '12h',
-  theme: 'dark-graphite',
-  language: defaultLocale
-}
 
 function createDemoConnections () {
   const names = [
@@ -542,23 +531,6 @@ function createDemoConnections () {
       reconnect: index % 4 === 0
     }
   }))
-}
-
-function normalizeSettings (settings = {}) {
-  return {
-    ...defaultSettings,
-    ...settings,
-    sshfsBinary: settings.sshfsBinary || defaultSettings.sshfsBinary,
-    startupWithOS: typeof settings.startupWithOS === 'boolean' ? settings.startupWithOS : defaultSettings.startupWithOS,
-    displayTrayMessageOnClose: typeof settings.displayTrayMessageOnClose === 'boolean' ? settings.displayTrayMessageOnClose : defaultSettings.displayTrayMessageOnClose,
-    processTrackTimeout: Number(settings.processTrackTimeout) || defaultSettings.processTrackTimeout,
-    showDebugPanel: typeof settings.showDebugPanel === 'boolean' ? settings.showDebugPanel : defaultSettings.showDebugPanel,
-    compactMode: typeof settings.compactMode === 'boolean' ? settings.compactMode : defaultSettings.compactMode,
-    demoMode: typeof settings.demoMode === 'boolean' ? settings.demoMode : defaultSettings.demoMode,
-    passkeyRetention: settings.passkeyRetention || defaultSettings.passkeyRetention,
-    theme: settings.theme || defaultSettings.theme,
-    language: normalizeLocale(settings.language)
-  }
 }
 
 export default {
@@ -1488,6 +1460,10 @@ export default {
 
     appSettings () {
       return this.$store.state.Settings.settings
+    },
+
+    sshfsBinaryPlaceholder () {
+      return currentPlatform.sshfsBinary
     }
   },
 

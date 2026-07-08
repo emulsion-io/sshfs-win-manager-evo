@@ -20,8 +20,14 @@ const staticPath = app.isPackaged
   ? path.join(process.resourcesPath, 'static')
   : path.join(__dirname, '../../static')
 
+const isWindows = process.platform === 'win32'
+
 function getAppIconPath () {
-  return path.join(staticPath, 'app-icon.ico')
+  return path.join(staticPath, isWindows ? 'app-icon.ico' : 'app-icon.png')
+}
+
+function getTrayIconPath () {
+  return path.join(staticPath, isWindows ? 'tray-icon.ico' : 'tray-icon.png')
 }
 
 function getLegacyConfigCandidates () {
@@ -59,7 +65,9 @@ app.setName('SSHFS-Win Manager Evo')
 app.setPath('userData', userDataPath)
 const appStatePath = path.join(app.getPath('userData'), 'app-state.json')
 
-app.setAppUserModelId('dev.fabricesimonet.apps.sshfs-win-manager-evo')
+if (isWindows) {
+  app.setAppUserModelId('dev.fabricesimonet.apps.sshfs-win-manager-evo')
+}
 
 function safeLog (method, ...args) {
   try {
@@ -156,7 +164,7 @@ ipcMain.handle('dialog:select-private-key', async () => {
   const result = await dialog.showOpenDialog({
     title: 'Select private key',
     properties: ['openFile'],
-    defaultPath: path.join(process.env.USERPROFILE || '', '.ssh')
+    defaultPath: path.join(app.getPath('home'), '.ssh')
   })
 
   return result.canceled ? null : result.filePaths[0]
@@ -353,7 +361,7 @@ if (isSecondInstance) {
       })
     }
 
-    tray = new Tray(path.join(staticPath, 'tray-icon.ico'))
+    tray = new Tray(getTrayIconPath())
 
     const trayMenu = Menu.buildFromTemplate([
       {

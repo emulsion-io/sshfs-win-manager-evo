@@ -2,7 +2,9 @@ import { EventEmitter } from 'events'
 import os from 'os'
 
 import store from './store/index.js'
-import ProcessHandlerWin from './ProcessHandlerWin.js'
+import ProcessHandlerLinux from './process/ProcessHandlerLinux.js'
+import ProcessHandlerUnsupported from './process/ProcessHandlerUnsupported.js'
+import ProcessHandlerWin from './process/ProcessHandlerWin.js'
 
 let processList = []
 let processWatchList = {}
@@ -17,6 +19,10 @@ class ProcessManager extends EventEmitter {
   }
 
   create (conn) {
+    if (!this.processHandler) {
+      return Promise.reject(new Error(`Unsupported platform: ${os.platform()}`))
+    }
+
     this.processHandler.settings = store.state.Settings.settings
 
     const timeoutTimer = setTimeout(() => {
@@ -94,10 +100,15 @@ class ProcessManager extends EventEmitter {
 
 const settings = store.state.Settings.settings
 
-let processManager = null
-
-if (os.platform() === 'win32') {
-  processManager = new ProcessHandlerWin(settings)
+function createProcessHandler () {
+  switch (os.platform()) {
+    case 'win32':
+      return new ProcessHandlerWin(settings)
+    case 'linux':
+      return new ProcessHandlerLinux(settings)
+    default:
+      return new ProcessHandlerUnsupported(settings, os.platform())
+  }
 }
 
-export default new ProcessManager(processManager)
+export default new ProcessManager(createProcessHandler())
