@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray, clipboard, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, Menu, Tray, Notification, clipboard, dialog, ipcMain, shell } from 'electron'
 import path from 'path'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -111,6 +111,19 @@ function getSenderWindow (event) {
   return BrowserWindow.fromWebContents(event.sender)
 }
 
+function showMainWindow () {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+
+  mainWindow.show()
+  mainWindow.focus()
+}
+
 ipcMain.handle('window:open', (event, payload) => {
   const parent = getSenderWindow(event)
   const win = createAppWindow(payload.name, payload.route, {
@@ -137,6 +150,24 @@ ipcMain.on('window:hide-current', event => {
 ipcMain.on('window:minimize-current', event => {
   const win = getSenderWindow(event)
   if (win) win.minimize()
+})
+
+ipcMain.on('app:notify', (event, payload) => {
+  if (!Notification.isSupported()) {
+    return
+  }
+
+  const notification = new Notification({
+    title: 'SSHFS-Win Manager Evo',
+    body: typeof payload === 'string' ? payload : payload.body,
+    icon: getAppIconPath()
+  })
+
+  notification.on('click', () => {
+    showMainWindow()
+  })
+
+  notification.show()
 })
 
 ipcMain.handle('dialog:select-private-key', async () => {
@@ -311,10 +342,7 @@ if (isSecondInstance) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
-      mainWindow.show()
-      mainWindow.focus()
-    }
+    showMainWindow()
   })
 
   app.on('ready', () => {
@@ -353,8 +381,7 @@ if (isSecondInstance) {
       {
         label: 'About',
         click () {
-          mainWindow.show()
-          mainWindow.focus()
+          showMainWindow()
           mainWindow.webContents.send('main-window:show-section', 'about')
         }
       }
@@ -364,7 +391,7 @@ if (isSecondInstance) {
     tray.setContextMenu(trayMenu)
 
     tray.on('click', () => {
-      mainWindow.show()
+      showMainWindow()
     })
   })
 }

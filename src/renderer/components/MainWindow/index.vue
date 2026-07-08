@@ -1285,7 +1285,7 @@ export default {
     },
 
     notify (text) {
-      new Notification('SSHFS-Win Manager Evo', {
+      ipcRenderer.send('app:notify', {
         body: text
       })
     },
