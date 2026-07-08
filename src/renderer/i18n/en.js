@@ -25,6 +25,7 @@ export default {
     delete: 'Delete',
     copy: 'Copy',
     openFolder: 'Open folder',
+    openTerminal: 'Open in terminal',
     close: 'Close'
   },
   status: {
@@ -193,6 +194,8 @@ export default {
     trayStillRunning: 'Program still running in the system tray',
     debugCopied: 'Debug output copied to clipboard',
     sshCommandCopied: 'SSH command copied to clipboard',
+    terminalPasswordCopied: 'Password copied to clipboard',
+    terminalOpenFailed: 'Could not open terminal: {error}',
     disconnectedError: '"{name}" was disconnected due to a connection error.\nCheck your internet connection.',
     trackedAlternative: '"{name}" tracked using alternative method',
     processTimeout: 'Process timeout: couldn’t connect to "{name}"',

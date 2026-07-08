@@ -30,6 +30,8 @@ Ajout d'une connexion :
 - Attribution automatique d'une lettre de lecteur libre sous Windows.
 - Points de montage automatiques sous Linux et macOS.
 - Copie rapide d'une commande `ssh` équivalente pour ouvrir la connexion dans un terminal.
+- Ouverture rapide d'une connexion SSH dans un terminal avec le bouton `>_` : Tabby est utilisé s'il est installé, sinon le terminal par défaut de l'OS est ouvert.
+- Pour les connexions par mot de passe, le mot de passe est récupéré via la passkey ou demandé, puis copié dans le presse-papiers pour être collé au prompt SSH.
 - Import/export JSON des connexions.
 - Import de l'ancienne configuration SSHFS-Win Manager depuis `%APPDATA%\sshfs-win-manager\vuex.json`.
 - Interface multilingue avec sélection de la langue dans les paramètres.

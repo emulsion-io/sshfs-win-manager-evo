@@ -134,6 +134,15 @@
                     <Icon icon="openFolder"/>
                   </button>
                   <button
+                    type="button"
+                    class="round-action open-terminal"
+                    :disabled="conn.status !== 'connected'"
+                    v-tooltip="$t('common.openTerminal')"
+                    @click.stop="openTerminal(conn)"
+                  >
+                    <span>&gt;_</span>
+                  </button>
+                  <button
                     v-if="conn.status === 'connected'"
                     type="button"
                     class="round-action primary"
@@ -430,6 +439,15 @@
               >
                 <Icon icon="openFolder"/>
                 {{ $t('common.openFolder') }}
+              </button>
+              <button
+                class="action-button"
+                type="button"
+                :disabled="selectedConnection.status !== 'connected'"
+                @click="openTerminal(selectedConnection)"
+              >
+                <span class="terminal-glyph">&gt;_</span>
+                {{ $t('common.openTerminal') }}
               </button>
               <button class="action-button danger" type="button" @click="deleteConnection(selectedConnection)">
                 <Icon icon="trashCan"/>
@@ -1157,6 +1175,53 @@ export default {
       }
     },
 
+    async openTerminal (conn) {
+      if (this.appSettings.demoMode) {
+        return
+      }
+
+      if (!conn) {
+        return
+      }
+
+      const terminalConnection = await this.prepareConnectionForTerminal(conn)
+
+      if (!terminalConnection) {
+        return
+      }
+
+      try {
+        await ipcRenderer.invoke('shell:open-ssh-terminal', {
+          tabbyQuery: this.getTabbyQuickConnectQuery(terminalConnection),
+          sshArgs: this.getSshArgs(terminalConnection)
+        })
+      } catch (error) {
+        this.notify(this.$t('notifications.terminalOpenFailed', { error: error.message || error }), 'error-icon')
+      }
+    },
+
+    async prepareConnectionForTerminal (conn) {
+      if (conn.authType !== 'password' && conn.authType !== 'password-ask') {
+        return conn
+      }
+
+      const connectionWithPassword = conn.authType === 'password'
+        ? await this.prepareConnectionForConnect(conn)
+        : {
+            ...conn,
+            password: await this.requestConnectionPassword(conn)
+          }
+
+      if (!connectionWithPassword || !connectionWithPassword.password) {
+        return null
+      }
+
+      ipcRenderer.send('clipboard:write-text', connectionWithPassword.password)
+      this.notify(this.$t('notifications.terminalPasswordCopied'))
+
+      return connectionWithPassword
+    },
+
     getLocalMountPath (conn) {
       return getConnectionMountPoint(conn)
     },
@@ -1298,9 +1363,8 @@ export default {
       this.notify(this.$t('notifications.sshCommandCopied'))
     },
 
-    getSshCommand (conn) {
+    getSshArgs (conn) {
       const args = [
-        'ssh',
         '-p',
         String(conn.port || 22)
       ]
@@ -1329,7 +1393,26 @@ export default {
 
       args.push(`${conn.user || ''}@${conn.host || ''}`)
 
+      return args
+    },
+
+    getSshCommand (conn) {
+      const args = [
+        'ssh',
+        ...this.getSshArgs(conn)
+      ]
+
       return args.map(this.shellQuote).join(' ')
+    },
+
+    getTabbyQuickConnectQuery (conn) {
+      const user = conn.user ? `${conn.user}@` : ''
+      const host = String(conn.host || '')
+      const tabbyHost = host.includes(':') && !host.startsWith('[')
+        ? `[${host}]`
+        : host
+
+      return `${user}${tabbyHost}:${conn.port || 22}`
     },
 
     isKeyAuthConnection (conn) {
@@ -2185,6 +2268,31 @@ export default {
 
 .round-action.open-folder:not(:disabled):hover {
   background: linear-gradient(135deg, color-mix(in srgb, var(--app-success) 78%, #ffffff), var(--app-primary));
+}
+
+.round-action.open-terminal:not(:disabled) {
+  color: #ffffff;
+  background: #263238;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #ffffff 16%, transparent),
+    0 10px 24px color-mix(in srgb, #263238 24%, transparent);
+}
+
+.round-action.open-terminal:not(:disabled):hover {
+  background: color-mix(in srgb, #263238 78%, var(--app-primary));
+}
+
+.round-action.open-terminal span,
+.terminal-glyph {
+  font-family: Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.terminal-glyph {
+  display: inline-flex;
+  width: 20px;
+  justify-content: center;
 }
 
 .round-action.loading {

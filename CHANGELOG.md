@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.2
+
+- Ajout d'un bouton `>_` pour ouvrir directement une connexion SSH dans un terminal.
+- Ouverture via Tabby si disponible, puis fallback vers le terminal par défaut de l'OS.
+- Pour les connexions par mot de passe, copie du mot de passe dans le presse-papiers avant l'ouverture du terminal.
+
 ## 2.4.1
 
 - Ajout d'une action `Open` dans le menu de la zone de notification.

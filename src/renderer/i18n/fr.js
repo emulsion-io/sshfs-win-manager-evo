@@ -25,6 +25,7 @@ export default {
     delete: 'Supprimer',
     copy: 'Copier',
     openFolder: 'Ouvrir le dossier',
+    openTerminal: 'Ouvrir dans le terminal',
     close: 'Fermer'
   },
   status: {
@@ -193,6 +194,8 @@ export default {
     trayStillRunning: 'Le programme continue de tourner dans la zone de notification',
     debugCopied: 'Logs copiés dans le presse-papiers',
     sshCommandCopied: 'Commande SSH copiée dans le presse-papiers',
+    terminalPasswordCopied: 'Mot de passe copié dans le presse-papiers',
+    terminalOpenFailed: 'Impossible d’ouvrir le terminal : {error}',
     disconnectedError: '"{name}" a été déconnectée à cause d’une erreur de connexion.\nVérifie ta connexion internet.',
     trackedAlternative: '"{name}" est suivie avec la méthode alternative',
     processTimeout: 'Timeout du process : impossible de se connecter à "{name}"',

@@ -2,6 +2,8 @@ import { app, BrowserWindow, Menu, Tray, clipboard, dialog, ipcMain, shell } fro
 import path from 'path'
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
+import { spawn, execFile } from 'child_process'
+import { promisify } from 'util'
 
 const isSecondInstance = !app.requestSingleInstanceLock()
 const userDataPath = path.join(app.getPath('appData'), 'sshfs-win-manager-evo')
@@ -21,6 +23,7 @@ const staticPath = app.isPackaged
   : path.join(__dirname, '../../static')
 
 const isWindows = process.platform === 'win32'
+const execFileAsync = promisify(execFile)
 
 function getAppIconPath () {
   return path.join(staticPath, isWindows ? 'app-icon.ico' : 'app-icon.png')
@@ -28,6 +31,124 @@ function getAppIconPath () {
 
 function getTrayIconPath () {
   return path.join(staticPath, isWindows ? 'tray-icon.ico' : 'tray-icon.png')
+}
+
+function spawnDetached (file, args) {
+  const child = spawn(file, args, {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: false
+  })
+
+  child.unref()
+}
+
+async function findCommandPath (command) {
+  try {
+    const lookupCommand = isWindows ? 'where.exe' : 'sh'
+    const lookupArgs = isWindows ? [command] : ['-lc', `command -v ${quotePosixArg(command)}`]
+    const { stdout } = await execFileAsync(lookupCommand, lookupArgs, { windowsHide: true })
+    const [firstMatch] = stdout.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
+
+    return firstMatch || null
+  } catch {
+    return null
+  }
+}
+
+async function findTabbyPath () {
+  const pathCommand = await findCommandPath('tabby') || (isWindows ? await findCommandPath('tabby.exe') : null)
+
+  if (pathCommand) {
+    return pathCommand
+  }
+
+  const candidates = process.platform === 'win32'
+    ? [
+        path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Tabby', 'Tabby.exe'),
+        path.join(process.env.PROGRAMFILES || '', 'Tabby', 'Tabby.exe'),
+        path.join(process.env['PROGRAMFILES(X86)'] || '', 'Tabby', 'Tabby.exe')
+      ]
+    : process.platform === 'darwin'
+      ? ['/Applications/Tabby.app/Contents/MacOS/Tabby']
+      : []
+
+  return candidates.find(candidate => candidate && existsSync(candidate)) || null
+}
+
+function quoteWindowsArg (value) {
+  const text = String(value)
+
+  if (/^[A-Za-z0-9_@%+=:,./\\[\]-]+$/.test(text)) {
+    return text
+  }
+
+  return `"${text.replace(/"/g, '\\"')}"`
+}
+
+function quotePosixArg (value) {
+  return `'${String(value).replace(/'/g, "'\\''")}'`
+}
+
+function getSshCommandString (args) {
+  const quote = isWindows ? quoteWindowsArg : quotePosixArg
+
+  return ['ssh', ...args].map(quote).join(' ')
+}
+
+function escapeAppleScriptString (value) {
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
+async function openSshInSystemTerminal (sshArgs) {
+  const command = getSshCommandString(sshArgs)
+
+  if (process.platform === 'win32') {
+    spawnDetached('cmd.exe', ['/k', command])
+    return 'system'
+  }
+
+  if (process.platform === 'darwin') {
+    spawnDetached('osascript', ['-e', `tell application "Terminal" to do script "${escapeAppleScriptString(command)}"`, '-e', 'tell application "Terminal" to activate'])
+    return 'system'
+  }
+
+  const terminalCommands = [
+    { file: 'xdg-terminal-exec', args: ['sh', '-lc', command] },
+    { file: 'x-terminal-emulator', args: ['-e', 'sh', '-lc', command] },
+    { file: 'gnome-terminal', args: ['--', 'sh', '-lc', command] },
+    { file: 'konsole', args: ['-e', 'sh', '-lc', command] },
+    { file: 'xfce4-terminal', args: ['-e', `sh -lc ${quotePosixArg(command)}`] },
+    { file: 'xterm', args: ['-e', 'sh', '-lc', command] }
+  ]
+
+  for (const terminal of terminalCommands) {
+    const terminalPath = await findCommandPath(terminal.file)
+
+    if (terminalPath) {
+      spawnDetached(terminalPath, terminal.args)
+      return 'system'
+    }
+  }
+
+  throw new Error('No terminal application found')
+}
+
+async function openSshTerminal ({ tabbyQuery, sshArgs }) {
+  if (!tabbyQuery || !Array.isArray(sshArgs) || sshArgs.length === 0) {
+    throw new Error('Invalid SSH terminal payload')
+  }
+
+  const tabbyPath = await findTabbyPath()
+
+  if (tabbyPath) {
+    spawnDetached(tabbyPath, ['quickConnect', 'ssh', tabbyQuery])
+    return { terminal: 'tabby' }
+  }
+
+  const terminal = await openSshInSystemTerminal(sshArgs)
+
+  return { terminal }
 }
 
 function getLegacyConfigCandidates () {
@@ -208,6 +329,7 @@ ipcMain.handle('app:get-login-item-settings', (event, settings) => app.getLoginI
 ipcMain.handle('app:set-login-item-settings', (event, settings) => app.setLoginItemSettings(settings))
 ipcMain.handle('shell:open-path', (event, targetPath) => shell.openPath(targetPath))
 ipcMain.handle('shell:open-external', (event, url) => shell.openExternal(url))
+ipcMain.handle('shell:open-ssh-terminal', (event, payload) => openSshTerminal(payload))
 ipcMain.on('clipboard:write-text', (event, text) => clipboard.writeText(text))
 ipcMain.on('theme:preview', (event, theme) => {
   windows.forEach(win => {
