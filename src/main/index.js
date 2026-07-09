@@ -5,6 +5,16 @@ import { existsSync } from 'fs'
 import { spawn, execFile } from 'child_process'
 import { promisify } from 'util'
 
+const isWindows = process.platform === 'win32'
+const appName = 'SSHFS Manager Evo'
+const appUserModelId = 'dev.fabricesimonet.apps.sshfs-manager-evo'
+
+app.setName(appName)
+
+if (isWindows) {
+  app.setAppUserModelId(appUserModelId)
+}
+
 const isSecondInstance = !app.requestSingleInstanceLock()
 const userDataPath = path.join(app.getPath('appData'), 'sshfs-win-manager-evo')
 
@@ -22,7 +32,6 @@ const staticPath = app.isPackaged
   ? path.join(process.resourcesPath, 'static')
   : path.join(__dirname, '../../static')
 
-const isWindows = process.platform === 'win32'
 const execFileAsync = promisify(execFile)
 
 function getAppIconPath () {
@@ -182,13 +191,8 @@ function getLegacyConnections (data) {
   return []
 }
 
-app.setName('SSHFS-Win Manager Evo')
 app.setPath('userData', userDataPath)
 const appStatePath = path.join(app.getPath('userData'), 'app-state.json')
-
-if (isWindows) {
-  app.setAppUserModelId('dev.fabricesimonet.apps.sshfs-win-manager-evo')
-}
 
 function safeLog (method, ...args) {
   try {
@@ -475,7 +479,7 @@ if (isSecondInstance) {
 
   app.on('ready', () => {
     mainWindow = createAppWindow('main-window', '', {
-      title: 'SSHFS-Win Manager Evo',
+      title: appName,
       height: 760,
       width: 1440,
       minHeight: 650,
@@ -524,7 +528,7 @@ if (isSecondInstance) {
       }
     ])
 
-    tray.setToolTip('SSHFS-Win Manager Evo')
+    tray.setToolTip(appName)
     tray.setContextMenu(trayMenu)
 
     tray.on('click', () => {

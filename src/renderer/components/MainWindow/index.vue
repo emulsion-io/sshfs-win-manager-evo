@@ -1,5 +1,5 @@
 <template>
-  <Window title="SSHFS-Win Manager Evo" closeAction="hide" minimizable @close="showRunningInBackgroundNotification">
+  <Window title="SSHFS Manager Evo" closeAction="hide" minimizable @close="showRunningInBackgroundNotification">
     <div class="main-shell" :class="{ 'compact-mode': appSettings.compactMode, 'detail-collapsed': isDetailPanelCollapsed }">
       <aside class="nav-rail">
         <div class="brand-mark">
@@ -285,7 +285,7 @@
         <div v-else-if="activeSection === 'about'" class="workspace-card about-workspace">
           <header class="workspace-header">
             <div>
-              <h1>SSHFS-Win Manager Evo</h1>
+              <h1>SSHFS Manager Evo</h1>
               <p>{{ $t('about.versionLine', { version: appVersion }) }}</p>
             </div>
           </header>

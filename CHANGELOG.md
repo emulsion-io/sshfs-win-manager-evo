@@ -5,6 +5,7 @@
 - Ajout d'un bouton `>_` pour ouvrir directement une connexion SSH dans un terminal.
 - Ouverture via Tabby si disponible, puis fallback vers le terminal par défaut de l'OS.
 - Pour les connexions par mot de passe, copie du mot de passe dans le presse-papiers avant l'ouverture du terminal.
+- Renommage technique Windows en `sshfs-manager-evo` pour éviter le regroupement taskbar hérité `Electron`.
 
 ## 2.4.1
 

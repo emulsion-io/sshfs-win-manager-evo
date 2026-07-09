@@ -1,6 +1,6 @@
 export default {
   app: {
-    name: 'SSHFS-Win Manager Evo',
+    name: 'SSHFS Manager Evo',
     serviceActive: 'Service active',
     serviceActiveShort: 'Active'
   },
