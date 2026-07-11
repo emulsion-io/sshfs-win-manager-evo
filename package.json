@@ -45,8 +45,14 @@
     "directories": {
       "output": "build"
     },
+    "electronLanguages": [
+      "fr",
+      "en-US"
+    ],
     "files": [
-      "out/**/*"
+      "out/**/*",
+      "package.json",
+      "!node_modules/**/*"
     ],
     "extraResources": [
       {
