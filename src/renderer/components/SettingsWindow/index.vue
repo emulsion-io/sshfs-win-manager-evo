@@ -75,12 +75,7 @@ export default {
       this.form = { ...settings }
       this.$store.dispatch('UPDATE_SETTINGS', settings)
 
-      ipcRenderer.invoke('app:set-login-item-settings', {
-        ...{
-          openAtLogin: settings.startupWithOS
-        },
-        ...this.loginItemSettings
-      }).catch(() => {})
+      ipcRenderer.invoke('app:set-autostart-settings', settings.startupWithOS).catch(() => {})
 
       ipcRenderer.send('window:close-current')
     },
@@ -169,11 +164,6 @@ export default {
       isReady: false,
       isCommitted: false,
       previousTheme: null,
-      loginItemSettings: {
-        args: [
-          '--systray'
-        ]
-      },
       themeGroups: [
         {
           label: 'Dark',
@@ -223,13 +213,13 @@ export default {
     this.form = normalizeSettings(this.$store.state.Settings.settings)
     this.previousTheme = this.form.theme
 
-    const settings = await ipcRenderer.invoke('app:get-login-item-settings', this.loginItemSettings)
+    const settings = await ipcRenderer.invoke('app:get-autostart-settings')
 
     this.isReady = true
 
     this.form = normalizeSettings({
       ...this.form,
-      startupWithOS: settings.openAtLogin
+      startupWithOS: settings.supported ? settings.openAtLogin : this.form.startupWithOS
     })
   },
 

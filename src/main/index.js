@@ -5,6 +5,8 @@ import { existsSync } from 'fs'
 import { spawn, execFile } from 'child_process'
 import { promisify } from 'util'
 
+import { applyAutostartSettings, getAutostartSettings, wasOpenedAtLogin } from './autostart.js'
+
 const isWindows = process.platform === 'win32'
 const appName = 'SSHFS Manager Evo'
 const appUserModelId = 'dev.fabricesimonet.apps.sshfs-manager-evo'
@@ -15,7 +17,8 @@ if (isWindows) {
   app.setAppUserModelId(appUserModelId)
 }
 
-const isSecondInstance = !app.requestSingleInstanceLock()
+const startHidden = process.argv.includes('--systray') || wasOpenedAtLogin(app)
+const isSecondInstance = !app.requestSingleInstanceLock({ startHidden })
 const userDataPath = path.join(app.getPath('appData'), 'sshfs-win-manager-evo')
 
 let mainWindow = null
@@ -329,8 +332,8 @@ ipcMain.handle('dialog:select-connection-icon', async () => {
 })
 
 ipcMain.handle('app:get-version', () => app.getVersion())
-ipcMain.handle('app:get-login-item-settings', (event, settings) => app.getLoginItemSettings(settings))
-ipcMain.handle('app:set-login-item-settings', (event, settings) => app.setLoginItemSettings(settings))
+ipcMain.handle('app:get-autostart-settings', () => getAutostartSettings(app))
+ipcMain.handle('app:set-autostart-settings', (event, openAtLogin) => applyAutostartSettings(app, openAtLogin))
 ipcMain.handle('shell:open-path', (event, targetPath) => shell.openPath(targetPath))
 ipcMain.handle('shell:open-external', (event, url) => shell.openExternal(url))
 ipcMain.handle('shell:open-ssh-terminal', (event, payload) => openSshTerminal(payload))
@@ -473,8 +476,12 @@ ipcMain.on('passkey:unlocked', () => {
 if (isSecondInstance) {
   app.quit()
 } else {
-  app.on('second-instance', () => {
-    showMainWindow()
+  app.on('second-instance', (event, argv, workingDirectory, additionalData) => {
+    const secondInstanceStartsHidden = (additionalData && additionalData.startHidden) || argv.includes('--systray')
+
+    if (!secondInstanceStartsHidden) {
+      showMainWindow()
+    }
   })
 
   app.on('ready', () => {
@@ -492,7 +499,7 @@ if (isSecondInstance) {
       resizable: true
     })
 
-    if (!process.argv.includes('--systray')) {
+    if (!startHidden) {
       mainWindow.once('ready-to-show', () => {
         mainWindow.show()
       })

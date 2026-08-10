@@ -601,6 +601,7 @@ export default {
         this.resizeForDetailPanel(false)
       }
       this.settingsForm = normalizeSettings(this.appSettings)
+      this.refreshAutostartSetting()
     },
 
     showAbout () {
@@ -723,18 +724,25 @@ export default {
       setLocale(language)
     },
 
+    async refreshAutostartSetting () {
+      try {
+        const settings = await ipcRenderer.invoke('app:get-autostart-settings')
+
+        if (settings.supported) {
+          this.settingsForm.startupWithOS = settings.openAtLogin
+        }
+      } catch {
+        // Keep the persisted value if the operating system cannot be queried.
+      }
+    },
+
     saveSettings () {
       const settings = normalizeSettings(this.settingsForm)
 
       this.settingsForm = { ...settings }
       this.$store.dispatch('UPDATE_SETTINGS', settings)
 
-      ipcRenderer.invoke('app:set-login-item-settings', {
-        openAtLogin: settings.startupWithOS,
-        args: [
-          '--systray'
-        ]
-      }).catch(() => {})
+      ipcRenderer.invoke('app:set-autostart-settings', settings.startupWithOS).catch(() => {})
     },
 
     async exportConnections () {
@@ -1704,6 +1712,11 @@ export default {
             this.detailPanelCollapsed = false
             this.resizeForDetailPanel(false)
           }
+        }
+
+        if (section === 'settings') {
+          this.settingsForm = normalizeSettings(this.appSettings)
+          this.refreshAutostartSetting()
         }
       }
     })
