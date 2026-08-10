@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray, clipboard, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, Menu, Notification, Tray, clipboard, dialog, ipcMain, shell } from 'electron'
 import path from 'path'
 import { readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -289,6 +289,24 @@ ipcMain.on('window:hide-current', event => {
 ipcMain.on('window:minimize-current', event => {
   const win = getSenderWindow(event)
   if (win) win.minimize()
+})
+
+ipcMain.on('app:show-background-notification', (event, message) => {
+  if (getSenderWindow(event) !== mainWindow || !Notification.isSupported()) {
+    return
+  }
+
+  const body = String(message || '').trim().slice(0, 500)
+
+  if (!body) {
+    return
+  }
+
+  new Notification({
+    title: appName,
+    body,
+    icon: getAppIconPath()
+  }).show()
 })
 
 ipcMain.handle('dialog:select-private-key', async () => {

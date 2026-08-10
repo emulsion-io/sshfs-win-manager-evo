@@ -98,7 +98,7 @@ export default {
     passkey1d: '1 jour',
     passkey2d: '2 jours',
     startupWithOS: 'Démarrer avec Windows',
-    displayTrayMessageOnClose: 'Message tray à la fermeture',
+    displayTrayMessageOnClose: 'Notifier lors du passage dans la zone de notification',
     showDebugPanel: 'Afficher le panneau debug',
     compactMode: 'Mode compact',
     demoMode: 'Mode démo',

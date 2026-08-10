@@ -1356,6 +1356,7 @@ export default {
     showRunningInBackgroundNotification () {
       if (!this.runningInBackgroundNotificationShowed) {
         if (this.$store.state.Settings.settings.displayTrayMessageOnClose) {
+          ipcRenderer.send('app:show-background-notification', this.$t('notifications.trayStillRunning'))
           this.runningInBackgroundNotificationShowed = true
         }
       }
