@@ -222,6 +222,11 @@ export default {
         return true
       }
 
+      // An empty password while editing means "keep the stored password".
+      if (!this.conn.password && this.isEditingMode) {
+        this.conn.password = this.existingPlainPassword
+      }
+
       if (!this.conn.password) {
         return true
       }
@@ -263,6 +268,7 @@ export default {
   data () {
     return {
       isEditingMode: false,
+      existingPlainPassword: '',
 
       title: this.$t('connectionForm.addTitle'),
       drives: 'DEFGHIJKLMNOPQRSTUVWXYZ',
@@ -306,6 +312,7 @@ export default {
       this.title = this.$t('connectionForm.editTitle')
 
       this.conn = JSON.parse(JSON.stringify(this.$store.state.Data.connections.find(a => a.uuid === this.$route.params.uuid)))
+      this.existingPlainPassword = this.conn.password || ''
       this.conn.password = ''
       this.conn.secrets = this.conn.secrets || {}
 
