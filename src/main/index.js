@@ -480,6 +480,7 @@ if (isSecondInstance) {
   app.on('ready', () => {
     mainWindow = createAppWindow('main-window', '', {
       title: appName,
+      show: false,
       height: 760,
       width: 1440,
       minHeight: 650,
