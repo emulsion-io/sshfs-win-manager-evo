@@ -1741,23 +1741,18 @@ export default {
       originalConsoleLog(...args)
     }
 
-    const startupConnections = []
-
     this.connections.forEach(conn => {
       conn.status = 'disconnected'
       conn.pid = null
-      if (conn.advanced.connectOnStartup) {
-        startupConnections.push(conn)
-      }
     })
 
-    const runStartupConnections = async () => {
-      for (const conn of startupConnections) {
-        await this.connect(conn)
-      }
-    }
-
-    runStartupConnections()
+    ProcessManager.on('adopted', ({ pid, conn }) => {
+      this.$store.dispatch('UPDATE_CONNECTION_STATUS', {
+        uuid: conn.uuid,
+        pid,
+        status: 'connected'
+      })
+    })
 
     ProcessManager.on('terminated', pid => {
       let conn = this.getConnectionByPid(pid)
@@ -1783,18 +1778,13 @@ export default {
       const mountPoint = getConnectionMountPoint(conn)
 
       if (isMountPointActive(mountPoint)) {
-        ProcessManager.getLastSpawnedProcess().then(process => {
+        ProcessManager.getLastSpawnedProcess().then(async process => {
           let foundConnection = this.connections.find(i => i.pid === process.pid)
 
-          if (!foundConnection) {
-            conn.pid = process.pid
-            conn.status = 'connected'
-
-            ProcessManager.watch(process.pid)
-
+          if (!foundConnection && await ProcessManager.adopt(process.pid, conn)) {
             this.notify(this.$t('notifications.trackedAlternative', { name: conn.name }))
           }
-        })
+        }).catch(() => {})
       } else {
         conn.pid = null
         conn.status = 'disconnected'
@@ -1802,6 +1792,26 @@ export default {
         this.notify(this.$t('notifications.processTimeout', { name: conn.name }), 'error-icon')
       }
     })
+
+    const reconcileAndRunStartupConnections = async () => {
+      if (!this.appSettings.demoMode) {
+        try {
+          await ProcessManager.adoptRunningConnections(this.connections)
+        } catch (error) {
+          console.warn('Unable to reconcile running SSHFS mounts:', error)
+        }
+      }
+
+      const startupConnections = this.connections.filter(conn =>
+        conn.advanced.connectOnStartup && conn.status !== 'connected'
+      )
+
+      for (const conn of startupConnections) {
+        await this.connect(conn)
+      }
+    }
+
+    reconcileAndRunStartupConnections()
   },
 
   beforeUnmount () {

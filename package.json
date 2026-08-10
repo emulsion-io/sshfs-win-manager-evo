@@ -29,6 +29,7 @@
     "dev:tray": "node scripts/run-electron-vite.cjs dev -- --systray",
     "lint": "eslint \"src/**/*.{js,vue}\"",
     "lint:fix": "eslint \"src/**/*.{js,vue}\" --fix",
+    "test:process": "node scripts/test-sshfs-process.mjs",
     "postinstall": "npm run lint:fix"
   },
   "build": {

@@ -1,8 +1,9 @@
-import { exec, spawn } from 'child_process'
+import { exec, execFile, spawn } from 'child_process'
 
-import { dirname, join } from 'path'
+import { basename, dirname, join } from 'path'
 import { existsSync as fileExistsSync, unlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
+import { isSshfsExecutable, parseSshfsArguments, parseWindowsCommandLine } from './SshfsProcess.js'
 
 class ProcessHandlerWin {
   constructor (settings) {
@@ -412,6 +413,44 @@ class ProcessHandlerWin {
           }
         } else {
           reject(new Error('Unable to list drive letters'))
+        }
+      })
+    })
+  }
+
+  listRunningMounts () {
+    const command = [
+      '$items = @(Get-CimInstance Win32_Process -Filter "Name = \'sshfs.exe\'")',
+      '$items | Select-Object ProcessId, ExecutablePath, CommandLine | ConvertTo-Json -Compress'
+    ].join('; ')
+
+    return new Promise(resolve => {
+      execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], {
+        windowsHide: true,
+        maxBuffer: 1024 * 1024
+      }, (error, stdout) => {
+        if (error || !stdout.toString().trim()) {
+          resolve([])
+          return
+        }
+
+        try {
+          const parsed = JSON.parse(stdout.toString())
+          const processes = (Array.isArray(parsed) ? parsed : [parsed]).map(process => {
+            const pid = Number.parseInt(process.ProcessId, 10)
+            const args = parseWindowsCommandLine(process.CommandLine)
+            const executable = process.ExecutablePath || args[0]
+
+            if (!isSshfsExecutable(basename(executable || '')) || !isSshfsExecutable(args[0])) {
+              return null
+            }
+
+            return parseSshfsArguments(pid, args.slice(1))
+          })
+
+          resolve(processes.filter(Boolean))
+        } catch {
+          resolve([])
         }
       })
     })

@@ -6,6 +6,8 @@ import ProcessHandlerLinux from './process/ProcessHandlerLinux.js'
 import ProcessHandlerMac from './process/ProcessHandlerMac.js'
 import ProcessHandlerUnsupported from './process/ProcessHandlerUnsupported.js'
 import ProcessHandlerWin from './process/ProcessHandlerWin.js'
+import { matchesConnection } from './process/SshfsProcess.js'
+import { currentPlatform, getConnectionMountPoint, isMountPointActive } from './platform/index.js'
 
 let processList = []
 let processWatchList = {}
@@ -78,12 +80,17 @@ class ProcessManager extends EventEmitter {
   }
 
   watch (pid) {
+    if (processWatchList[pid]) {
+      return
+    }
+
     processWatchList[pid] = setInterval(() => {
       this.exists(pid).then(exists => {
         if (!exists) {
           this.emit('not-found', pid)
 
           this.unwatch(pid)
+          processList = processList.filter(processPid => processPid !== pid)
           delete processConnectionList[pid]
         }
       })
@@ -92,6 +99,7 @@ class ProcessManager extends EventEmitter {
 
   unwatch (pid) {
     clearInterval(processWatchList[pid])
+    delete processWatchList[pid]
   }
 
   exists (pid) {
@@ -100,6 +108,60 @@ class ProcessManager extends EventEmitter {
 
   getLastSpawnedProcess () {
     return this.processHandler.getLastSpawnedProcess()
+  }
+
+  async adopt (pid, conn) {
+    if (!Number.isInteger(pid) || pid <= 0 || !conn || processList.includes(pid)) {
+      return false
+    }
+
+    if (!await this.exists(pid)) {
+      return false
+    }
+
+    processList.push(pid)
+    processConnectionList[pid] = conn
+    this.watch(pid)
+    this.emit('adopted', { pid, conn })
+
+    return true
+  }
+
+  async adoptRunningConnections (connections) {
+    if (!Array.isArray(connections) || typeof this.processHandler.listRunningMounts !== 'function') {
+      return []
+    }
+
+    this.processHandler.settings = store.state.Settings.settings
+
+    const runningMounts = await this.processHandler.listRunningMounts()
+    const eligibleConnections = connections.filter(conn => conn && !conn.demo)
+    const candidateMatches = runningMounts.map(runningMount => ({
+      runningMount,
+      connections: eligibleConnections.filter(conn => matchesConnection(
+        conn,
+        getConnectionMountPoint(conn),
+        runningMount,
+        currentPlatform.id
+      ))
+    }))
+    const unambiguousCandidates = candidateMatches.filter(candidate => candidate.connections.length === 1)
+    const adopted = []
+
+    for (const candidate of unambiguousCandidates) {
+      const conn = candidate.connections[0]
+      const matchesForConnection = unambiguousCandidates.filter(item => item.connections[0] === conn)
+
+      if (matchesForConnection.length !== 1 || !isMountPointActive(candidate.runningMount.mountPoint)) {
+        continue
+      }
+
+      if (await this.adopt(candidate.runningMount.pid, conn)) {
+        adopted.push({ pid: candidate.runningMount.pid, conn })
+      }
+    }
+
+    return adopted
   }
 }
 

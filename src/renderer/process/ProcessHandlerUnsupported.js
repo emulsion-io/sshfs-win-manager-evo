@@ -16,6 +16,10 @@ class ProcessHandlerUnsupported {
     return Promise.resolve(false)
   }
 
+  listRunningMounts () {
+    return Promise.resolve([])
+  }
+
   getLastSpawnedProcess () {
     return Promise.reject(new Error(`Unsupported platform: ${this.platform}`))
   }

@@ -1,9 +1,10 @@
 import { execFile, spawn } from 'child_process'
-import { dirname, join } from 'path'
-import { chmodSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from 'fs'
+import { basename, dirname, join } from 'path'
+import { chmodSync, existsSync, mkdirSync, promises as fsPromises, unlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 
 import { currentPlatform, getAutoMountPoint, getConnectionMountPoint } from '@/platform/index.js'
+import { isSshfsExecutable, parseSshfsArguments } from './SshfsProcess.js'
 
 class ProcessHandlerLinux {
   constructor (settings) {
@@ -353,6 +354,36 @@ class ProcessHandlerLinux {
         resolve(false)
       }
     })
+  }
+
+  async listRunningMounts () {
+    let entries
+
+    try {
+      entries = await fsPromises.readdir('/proc', { withFileTypes: true })
+    } catch {
+      return []
+    }
+
+    const processes = await Promise.all(entries
+      .filter(entry => entry.isDirectory() && /^\d+$/.test(entry.name))
+      .map(async entry => {
+        try {
+          const commandLine = await fsPromises.readFile(`/proc/${entry.name}/cmdline`)
+          const args = commandLine.toString('utf8').split('\0').filter(Boolean)
+          const executable = args.shift()
+
+          if (!isSshfsExecutable(basename(executable || ''))) {
+            return null
+          }
+
+          return parseSshfsArguments(Number.parseInt(entry.name, 10), args)
+        } catch {
+          return null
+        }
+      }))
+
+    return processes.filter(Boolean)
   }
 
   getLastSpawnedProcess () {

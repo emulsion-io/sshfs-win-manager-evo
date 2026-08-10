@@ -1,9 +1,48 @@
 import { execFile } from 'child_process'
+import { basename } from 'path'
 
 import ProcessHandlerLinux from './ProcessHandlerLinux.js'
 import { currentPlatform, getConnectionMountPoint } from '@/platform/index.js'
+import { isSshfsExecutable, parseMacProcessArguments, parseSshfsArguments } from './SshfsProcess.js'
 
 class ProcessHandlerMac extends ProcessHandlerLinux {
+  async listRunningMounts () {
+    let processList
+
+    try {
+      processList = await this.execFileOutput('/bin/ps', ['-axo', 'pid=,comm='])
+    } catch {
+      return []
+    }
+
+    const candidates = processList.toString().split(/\r?\n/).map(line => {
+      const match = line.match(/^\s*(\d+)\s+(.+)$/)
+
+      if (!match || !isSshfsExecutable(basename(match[2].trim()))) {
+        return null
+      }
+
+      return Number.parseInt(match[1], 10)
+    }).filter(Boolean)
+
+    const processes = await Promise.all(candidates.map(async pid => {
+      try {
+        const output = await this.execFileOutput('/usr/sbin/sysctl', ['-n', 'kern.procargs2', String(pid)], { encoding: null })
+        const args = parseMacProcessArguments(output)
+
+        if (!isSshfsExecutable(args[0])) {
+          return null
+        }
+
+        return parseSshfsArguments(pid, args.slice(1))
+      } catch {
+        return null
+      }
+    }))
+
+    return processes.filter(Boolean)
+  }
+
   // FUSE-T unmounts its local NFS volume when sshfs exits. Terminating the
   // process first also works with macFUSE; the unmount pass cleans up any
   // volume that remains registered by macOS.
@@ -52,6 +91,19 @@ class ProcessHandlerMac extends ProcessHandlerLinux {
       { file: 'diskutil', args: ['unmount', mountPoint] },
       { file: 'diskutil', args: ['unmount', 'force', mountPoint] }
     ]
+  }
+
+  execFileOutput (file, args, options = {}) {
+    return new Promise((resolve, reject) => {
+      execFile(file, args, { maxBuffer: 1024 * 1024, ...options }, (error, stdout) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve(stdout)
+      })
+    })
   }
 }
 
