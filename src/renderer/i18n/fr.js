@@ -200,6 +200,8 @@ export default {
     passkeyInvalid: 'Passkey invalide : impossible de déchiffrer le mot de passe.',
     passkeyUnlocked: 'Passkey validée : secrets déverrouillés.',
     passkeyLocked: 'Session verrouillée : la passkey sera redemandée à la prochaine utilisation.',
+    settingsSaved: 'Les paramètres ont bien été enregistrés.',
+    settingsSavedAutostartFailed: 'Paramètres enregistrés, mais impossible de mettre à jour le démarrage automatique.',
     trayStillRunning: 'Le programme continue de tourner dans la zone de notification',
     debugCopied: 'Logs copiés dans le presse-papiers',
     sshCommandCopied: 'Commande SSH copiée dans le presse-papiers',

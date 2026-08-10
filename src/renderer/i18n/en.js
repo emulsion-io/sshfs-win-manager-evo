@@ -200,6 +200,8 @@ export default {
     passkeyInvalid: 'Invalid passkey: could not decrypt the password.',
     passkeyUnlocked: 'Passkey accepted: secrets unlocked.',
     passkeyLocked: 'Session locked: the passkey will be requested again on next use.',
+    settingsSaved: 'Settings saved successfully.',
+    settingsSavedAutostartFailed: 'Settings saved, but the startup setting could not be updated.',
     trayStillRunning: 'Program still running in the system tray',
     debugCopied: 'Debug output copied to clipboard',
     sshCommandCopied: 'SSH command copied to clipboard',

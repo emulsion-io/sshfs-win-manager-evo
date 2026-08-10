@@ -736,13 +736,23 @@ export default {
       }
     },
 
-    saveSettings () {
+    async saveSettings () {
       const settings = normalizeSettings(this.settingsForm)
 
       this.settingsForm = { ...settings }
-      this.$store.dispatch('UPDATE_SETTINGS', settings)
+      await this.$store.dispatch('UPDATE_SETTINGS', settings)
 
-      ipcRenderer.invoke('app:set-autostart-settings', settings.startupWithOS).catch(() => {})
+      try {
+        const autostart = await ipcRenderer.invoke('app:set-autostart-settings', settings.startupWithOS)
+
+        if (autostart.supported && autostart.openAtLogin !== settings.startupWithOS) {
+          throw new Error('Autostart setting was not applied')
+        }
+
+        this.notify(this.$t('notifications.settingsSaved'))
+      } catch {
+        this.notify(this.$t('notifications.settingsSavedAutostartFailed'), 'error-icon')
+      }
     },
 
     async exportConnections () {
