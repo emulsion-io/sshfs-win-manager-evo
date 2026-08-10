@@ -61,6 +61,8 @@ npm install
 
 Le projet est aligne sur des versions compatibles entre elles. `npm install` doit donc passer sans `--legacy-peer-deps`.
 
+L'installation des dependances ne modifie pas les sources. Lancer explicitement `npm run lint:fix` lorsque les corrections automatiques ESLint sont souhaitees.
+
 ## Lancer en mode developpement
 
 Pour lancer l'application Electron en mode developpement :
@@ -122,6 +124,8 @@ Pour appliquer les corrections automatiques ESLint :
 ```bash
 npm run lint:fix
 ```
+
+La CI utilise `npm run lint` sans correction automatique afin de signaler toute erreur dans les fichiers valides.
 
 ## Compiler uniquement Electron/Vite
 
@@ -189,6 +193,14 @@ Cibles configurees :
 - Windows : NSIS
 - Linux : AppImage, deb, rpm
 - macOS : dmg, zip
+
+Les workflows GitHub Actions automatisent les controles et le packaging :
+
+- `CI` s'execute sur les push et pull requests vers `master` ;
+- `Release builds` peut etre lance manuellement pour recuperer les artefacts ;
+- un tag `v*` correspondant a la version de `package.json` cree en plus une release GitHub en brouillon.
+
+Le workflow de release produit Windows x64, Linux x64, macOS Apple Silicon et macOS Intel. Les artefacts d'un lancement manuel sont conserves pendant 14 jours.
 
 Points a traiter avant publication stable :
 

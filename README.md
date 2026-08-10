@@ -134,6 +134,21 @@ La langue se change depuis `Paramètres` > `Langue`. Le choix est enregistré da
 
 Les informations de développement, de build, de lint et de génération des icônes sont regroupées dans [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Builds automatisés
+
+GitHub Actions vérifie automatiquement le lint, les tests du parseur SSHFS et le build applicatif à chaque push ou pull request vers `master`.
+
+Le workflow `Release builds` peut être lancé manuellement depuis l'onglet `Actions` pour produire des artefacts téléchargeables pendant 14 jours : installateur Windows x64, paquets Linux x64, ainsi que dmg et zip macOS pour Apple Silicon et Intel.
+
+Pour préparer une release, mettre à jour la version dans `package.json`, puis pousser le tag correspondant :
+
+```bash
+git tag v2.4.5
+git push origin v2.4.5
+```
+
+Le tag doit correspondre exactement à la version du paquet. Une release GitHub en brouillon est alors créée avec tous les installateurs et le fichier `SHA256SUMS.txt`. Les paquets ne sont actuellement ni signés ni notariés ; la publication du brouillon reste volontairement manuelle.
+
 ## Notes importantes
 
 - Le mode `Auto (next free letter)` est géré par l'application sous Windows : une vraie lettre libre est choisie avant le lancement de SSHFS-Win.
