@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.4.5
+
+- Ajout de FUSE-T comme alternative à macFUSE sur macOS, avec détection du binaire, authentification et démontage adaptés.
+- Correction du démarrage automatique natif sous macOS et Linux via `launchd` et `systemd --user`.
+- Fiabilisation du chargement et de l'enregistrement de l'état afin d'éviter les écritures concurrentes et la persistance des PID ou statuts d'exécution.
+- Adoption au démarrage des montages SSHFS toujours actifs lorsqu'ils correspondent exactement à une connexion enregistrée, afin d'éviter les doubles montages.
+- Restauration de la notification système lorsque la fenêtre est fermée vers la zone de notification, avec un libellé d'option plus clair.
+- Ajout des workflows GitHub Actions pour contrôler et publier les builds Windows, Linux et macOS.
+
 ## 2.4.4
 
 - Préservation du mot de passe stocké en clair lorsqu'une connexion est enregistrée sans saisir un nouveau mot de passe.
