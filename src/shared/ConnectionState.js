@@ -40,13 +40,17 @@ function createRuntimeConnection (connection = {}, currentConnection = null) {
 
 function hydratePersistedConnections (connections = [], currentConnections = []) {
   const currentConnectionsByUuid = new Map(
-    currentConnections.map(connection => [connection.uuid, connection])
+    currentConnections
+      .filter(connection => connection && typeof connection === 'object')
+      .map(connection => [connection.uuid, connection])
   )
 
-  return connections.map(connection => createRuntimeConnection(
-    connection,
-    currentConnectionsByUuid.get(connection.uuid)
-  ))
+  return connections
+    .filter(connection => connection && typeof connection === 'object')
+    .map(connection => createRuntimeConnection(
+      connection,
+      currentConnectionsByUuid.get(connection.uuid)
+    ))
 }
 
 export {

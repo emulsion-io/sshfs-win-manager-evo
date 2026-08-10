@@ -1,12 +1,13 @@
 import { app, BrowserWindow, Menu, Tray, clipboard, dialog, ipcMain, shell } from 'electron'
 import path from 'path'
-import { mkdir, readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
 import { spawn, execFile } from 'child_process'
 import { promisify } from 'util'
 
 import { applyAutostartSettings, getAutostartSettings, wasOpenedAtLogin } from './autostart.js'
-import { createPersistedState, toPersistedConnections } from '../shared/ConnectionState.js'
+import StateRepository from './StateRepository.js'
+import { toPersistedConnections } from '../shared/ConnectionState.js'
 
 const isWindows = process.platform === 'win32'
 const appName = 'SSHFS Manager Evo'
@@ -197,6 +198,7 @@ function getLegacyConnections (data) {
 
 app.setPath('userData', userDataPath)
 const appStatePath = path.join(app.getPath('userData'), 'app-state.json')
+const stateRepository = new StateRepository(appStatePath)
 
 function safeLog (method, ...args) {
   try {
@@ -376,15 +378,10 @@ ipcMain.on('main-window:set-detail-collapsed', (event, payload) => {
   }, true)
 })
 ipcMain.handle('app-state:load', async () => {
-  try {
-    return createPersistedState(JSON.parse(await readFile(appStatePath, 'utf8')))
-  } catch {
-    return null
-  }
+  return stateRepository.load()
 })
 ipcMain.handle('app-state:save', async (event, state) => {
-  await mkdir(path.dirname(appStatePath), { recursive: true })
-  await writeFile(appStatePath, JSON.stringify(createPersistedState(state), null, 2), 'utf8')
+  return stateRepository.save(state)
 })
 ipcMain.handle('connections:export', async (event, payload) => {
   const result = await dialog.showSaveDialog(getSenderWindow(event), {
