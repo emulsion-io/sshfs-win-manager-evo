@@ -147,7 +147,7 @@ Sur macOS, l'application prend en charge deux moteurs. Choisir une seule de ces 
 - macFUSE avec SSHFS pour macFUSE ;
 - FUSE-T avec `sshfs-fuse-t`, une alternative sans extension noyau qui expose le montage via les mecanismes reseau de macOS.
 
-Dans les deux cas, l'application lance le binaire `sshfs` installe sur le systeme. Le choix du moteur reste donc entierement controle par l'installation et par le chemin configure dans `Parametres` > `Binaire SSHFS`.
+Dans les deux cas, l'application lance le binaire `sshfs` installé sur le système. Le choix du moteur reste donc entièrement contrôlé par l'installation et par le chemin configuré dans `Parametres` > `Binaire SSHFS`.
 
 ### Option A : macFUSE
 
@@ -159,21 +159,21 @@ Dans les deux cas, l'application lance le binaire `sshfs` installe sur le system
 
    <https://github.com/macfuse/macfuse/wiki/File-Systems-%E2%80%90-SSHFS>
 
-3. Si macOS demande d'autoriser une extension systeme ou un composant macFUSE, le faire dans `Reglages systeme` > `Confidentialite et securite`.
+3. Si macOS demande d'autoriser une extension système ou un composant macFUSE, le faire dans `Réglages système` > `Confidentialité et sécurité`.
 
-4. Redemarrer macOS si l'installateur ou le systeme le demande.
+4. Redémarrer macOS si l'installateur ou le système le demande.
 
 ### Option B : FUSE-T
 
-FUSE-T ne charge pas d'extension noyau. Il peut etre installe avec Homebrew :
+FUSE-T ne charge pas d'extension noyau. Il peut être installé avec Homebrew :
 
 ```bash
 brew install macos-fuse-t/homebrew-cask/sshfs-fuse-t
 ```
 
-La formule installe FUSE-T et son implementation SSHFS. Apres l'installation, verifier que `sshfs` est disponible comme indique ci-dessous.
+La formule installe FUSE-T et son implémentation SSHFS. Après l'installation, vérifier que `sshfs` est disponible comme indiqué ci-dessous.
 
-Comme FUSE-T expose notamment les montages comme des volumes reseau locaux, macOS peut demander l'autorisation d'acceder aux `Volumes reseau` dans `Reglages systeme` > `Confidentialite et securite` > `Fichiers et dossiers`.
+Comme FUSE-T expose notamment les montages comme des volumes réseau locaux, macOS peut demander l'autorisation d'accéder aux `Volumes réseau` dans `Réglages système` > `Confidentialité et sécurité` > `Fichiers et dossiers`.
 
 ### Chemins SSHFS cherches par l'application
 
@@ -237,7 +237,7 @@ Si le champ `Chemin de montage` est vide, l'application cree automatiquement un 
 
 ### Chemin personnalise
 
-Il est possible de choisir un dossier local dans le formulaire de connexion. Le dossier peut etre vide ou deja existant, mais il doit etre accessible en ecriture par l'utilisateur courant.
+Il est possible de choisir un dossier local dans le formulaire de connexion. Le dossier peut être vide ou déjà existant, mais il doit être accessible en écriture par l'utilisateur courant.
 
 ## Serveur distant
 
@@ -249,7 +249,7 @@ Verifier la connexion SSH avant de tester l'application :
 ssh -p 22 user@example.com
 ```
 
-Si cette commande echoue, SSHFS echouera aussi.
+Si cette commande échoue, SSHFS échouera aussi.
 
 ## Sources utiles
 
