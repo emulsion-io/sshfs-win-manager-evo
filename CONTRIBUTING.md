@@ -49,7 +49,7 @@ Resume rapide :
 
 - Windows : WinFsp + SSHFS-Win
 - Linux : `sshfs` + FUSE/fuse3
-- macOS : macFUSE + SSHFS pour macFUSE
+- macOS : macFUSE + SSHFS pour macFUSE, ou FUSE-T + `sshfs-fuse-t`
 
 ## Installer les dependances
 
@@ -98,6 +98,8 @@ mkdir -p ~/Mounts/sshfs-test
 sshfs user@example.com:/home/user ~/Mounts/sshfs-test
 diskutil unmount ~/Mounts/sshfs-test
 ```
+
+Ce test est valable avec macFUSE comme avec FUSE-T. Pour FUSE-T, verifier aussi que l'application dispose de l'autorisation macOS `Volumes reseau` si le dossier monte n'est pas lisible.
 
 Exemple Windows :
 
@@ -238,6 +240,7 @@ L'objectif actuel est `found 0 vulnerabilities`.
 - Windows utilise `src/renderer/process/ProcessHandlerWin.js`.
 - Linux utilise `src/renderer/process/ProcessHandlerLinux.js`.
 - macOS utilise `src/renderer/process/ProcessHandlerMac.js`.
+- Le handler macOS accepte macFUSE et FUSE-T. Un montage n'est considere connecte qu'apres un message d'authentification SSH ; un evenement FUSE local comme `INIT` ne suffit pas.
 - Les infos de plateforme et les points de montage automatiques sont centralises dans `src/renderer/platform/index.js`.
 - Sous Linux, le point de montage auto est `~/sshfs-win-manager-evo/<nom-connexion>`.
 - Sous macOS, le point de montage auto est `~/Mounts/sshfs-win-manager-evo/<nom-connexion>`.

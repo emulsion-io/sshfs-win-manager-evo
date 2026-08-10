@@ -291,9 +291,13 @@ class ProcessHandlerLinux {
   isConnectionStartedMessage (data) {
     const output = String(data).toLowerCase()
 
+    // FUSE-T's sshfs reports "authenticated to" instead of the usual
+    // macFUSE messages. Local FUSE events such as INIT are not sufficient:
+    // FUSE-T can create its local mount before SSH authentication succeeds.
     return output.includes('server version:') ||
       output.includes('authentication succeeded') ||
-      output.includes('remote_uid =')
+      output.includes('remote_uid =') ||
+      output.includes('authenticated to ')
   }
 
   getVisibleDebugOutput (data) {

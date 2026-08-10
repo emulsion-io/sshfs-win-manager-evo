@@ -142,14 +142,14 @@ user_allow_other
 
 ## macOS
 
-Sur macOS, il faut installer deux choses :
+Sur macOS, l'application prend en charge deux moteurs. Choisir une seule de ces solutions :
 
-- macFUSE
-- SSHFS pour macFUSE
+- macFUSE avec SSHFS pour macFUSE ;
+- FUSE-T avec `sshfs-fuse-t`, une alternative sans extension noyau qui expose le montage via les mecanismes reseau de macOS.
 
-Le site macFUSE indique que macFUSE installe le support FUSE, mais que les systemes de fichiers comme SSHFS doivent etre installes separement.
+Dans les deux cas, l'application lance le binaire `sshfs` installe sur le systeme. Le choix du moteur reste donc entierement controle par l'installation et par le chemin configure dans `Parametres` > `Binaire SSHFS`.
 
-### Installation recommandee
+### Option A : macFUSE
 
 1. Installer macFUSE depuis le site officiel :
 
@@ -162,6 +162,18 @@ Le site macFUSE indique que macFUSE installe le support FUSE, mais que les syste
 3. Si macOS demande d'autoriser une extension systeme ou un composant macFUSE, le faire dans `Reglages systeme` > `Confidentialite et securite`.
 
 4. Redemarrer macOS si l'installateur ou le systeme le demande.
+
+### Option B : FUSE-T
+
+FUSE-T ne charge pas d'extension noyau. Il peut etre installe avec Homebrew :
+
+```bash
+brew install macos-fuse-t/homebrew-cask/sshfs-fuse-t
+```
+
+La formule installe FUSE-T et son implementation SSHFS. Apres l'installation, verifier que `sshfs` est disponible comme indique ci-dessous.
+
+Comme FUSE-T expose notamment les montages comme des volumes reseau locaux, macOS peut demander l'autorisation d'acceder aux `Volumes reseau` dans `Reglages systeme` > `Confidentialite et securite` > `Fichiers et dossiers`.
 
 ### Chemins SSHFS cherches par l'application
 
@@ -179,7 +191,7 @@ Le chemin par defaut est :
 /opt/homebrew/bin/sshfs
 ```
 
-Si SSHFS est installe ailleurs, renseigner le chemin exact dans `Parametres` > `Binaire SSHFS`.
+Le chemin `/opt/homebrew/bin/sshfs` reste le choix par defaut. Une installation FUSE-T place habituellement son binaire dans `/usr/local/bin/sshfs`, qui est detecte automatiquement si le chemin par defaut n'existe pas. Si SSHFS est installe ailleurs, renseigner le chemin exact dans `Parametres` > `Binaire SSHFS`.
 
 ### Verifier l'installation macOS
 
@@ -243,4 +255,5 @@ Si cette commande echoue, SSHFS echouera aussi.
 
 - macFUSE : <https://macfuse.github.io/>
 - SSHFS pour macFUSE : <https://github.com/macfuse/macfuse/wiki/File-Systems-%E2%80%90-SSHFS>
+- FUSE-T et SSHFS pour FUSE-T : <https://github.com/macos-fuse-t/fuse-t>
 - SSHFS upstream : <https://github.com/libfuse/sshfs>
