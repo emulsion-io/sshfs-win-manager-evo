@@ -1,16 +1,16 @@
-# Developpement et build
+# Développement et build
 
-Cette page explique comment installer les dependances, lancer le projet en mode developpement, verifier le code, puis compiler l'application.
+Ce guide regroupe l'installation des dépendances de développement, les contrôles de qualité, le packaging local et les workflows GitHub Actions de SSHFS-Win Manager Evo.
 
-Le projet est en cours d'ouverture multi-OS. Windows reste la cible de packaging principale pour le moment, mais le code applicatif contient maintenant des handlers separes pour Windows, Linux et macOS.
+Le projet utilise des handlers distincts pour Windows, Linux et macOS. Les commandes de build doivent donc être testées sur la plateforme ciblée ou via les runners GitHub Actions correspondants.
 
-## Prerequis
+## Prérequis
 
 - Node.js et npm compatibles avec `package.json`
 - Git
-- Les prerequis SSHFS de votre OS pour tester une vraie connexion
+- Les prérequis SSHFS de la plateforme pour tester une vraie connexion
 
-La configuration actuelle a ete verifiee avec Node `24.11.1` et npm `11.6.2`.
+La configuration actuelle a été vérifiée avec Node `24.11.1` et npm `11.6.2`. Les dépendances demandent Node `^22.18.0` ou `>=24.11.0`.
 
 Le projet fournit un fichier `.nvmrc`. Avec `nvm` :
 
@@ -21,9 +21,7 @@ node -v
 npm -v
 ```
 
-Les dependances actuelles demandent Node `^22.18.0` ou `>=24.11.0`. Sur Ubuntu, le Node fourni par les depots APT peut etre trop ancien.
-
-Si `nvm` n'est pas installe sur Linux ou macOS :
+Sur Ubuntu, la version de Node fournie par les dépôts APT peut être trop ancienne. Si `nvm` n'est pas installé sous Linux ou macOS :
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
@@ -36,22 +34,15 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 ```
 
-Puis relancer :
+Puis exécuter `nvm install` et `nvm use` comme indiqué plus haut.
 
-```bash
-nvm install
-nvm use
-```
+Les prérequis permettant de tester SSHFS sont détaillés par système :
 
-Pour installer les prerequis SSHFS par systeme, voir [install.md](install.md).
+- [Windows](install.md#windows)
+- [Linux](install.md#linux)
+- [macOS](install.md#macos)
 
-Resume rapide :
-
-- Windows : WinFsp + SSHFS-Win
-- Linux : `sshfs` + FUSE/fuse3
-- macOS : macFUSE + SSHFS pour macFUSE, ou FUSE-T + `sshfs-fuse-t`
-
-## Installer les dependances
+## Installer les dépendances
 
 Depuis la racine du projet :
 
@@ -59,128 +50,78 @@ Depuis la racine du projet :
 npm install
 ```
 
-Le projet est aligne sur des versions compatibles entre elles. `npm install` doit donc passer sans `--legacy-peer-deps`.
+L'installation doit réussir sans `--legacy-peer-deps` et ne modifie pas les sources. Les corrections ESLint restent une action volontaire avec `npm run lint:fix`.
 
-L'installation des dependances ne modifie pas les sources. Lancer explicitement `npm run lint:fix` lorsque les corrections automatiques ESLint sont souhaitees.
+## Lancer en mode développement
 
-## Lancer en mode developpement
-
-Pour lancer l'application Electron en mode developpement :
+Pour démarrer le serveur Vite, compiler le processus principal Electron et ouvrir l'application :
 
 ```bash
 npm run dev
 ```
 
-Ce mode demarre le serveur Vite, compile le process principal Electron et ouvre l'application. Le port par defaut est `5173`; si le port est deja utilise, Vite choisit le suivant.
+Le port par défaut est `5173` ; Vite choisit le suivant s'il est déjà utilisé.
 
-Les scripts passent par `scripts/run-electron-vite.cjs`. Ce wrapper supprime `ELECTRON_RUN_AS_NODE` avant le lancement et force le telechargement du binaire Electron si necessaire. C'est volontaire : cette variable peut provoquer une fenetre blanche ou un crash au demarrage sous Windows.
+Les commandes passent par `scripts/run-electron-vite.cjs`. Ce wrapper retire `ELECTRON_RUN_AS_NODE` avant le lancement et force le téléchargement du binaire Electron si nécessaire. Cette variable peut sinon provoquer une fenêtre blanche ou un crash au démarrage sous Windows.
 
-Pour demarrer directement en mode systray :
+Pour démarrer directement en mode systray :
 
 ```bash
 npm run dev:tray
 ```
 
-## Tester une vraie connexion SSHFS
+## Tester une connexion SSHFS
 
-Avant de tester depuis l'application, verifier que le montage SSHFS fonctionne en ligne de commande.
+Avant de tester l'application, vérifier que le montage fonctionne en ligne de commande avec le moteur choisi :
 
-Exemple Linux :
+- [test manuel Windows](install.md#test-manuel-windows)
+- [test manuel Linux](install.md#test-manuel-linux)
+- [test manuel macOS](install.md#test-manuel-macos)
 
-```bash
-mkdir -p ~/sshfs-test
-sshfs user@example.com:/home/user ~/sshfs-test
-fusermount3 -u ~/sshfs-test
-```
+## Vérifier le code
 
-Exemple macOS :
-
-```bash
-mkdir -p ~/Mounts/sshfs-test
-sshfs user@example.com:/home/user ~/Mounts/sshfs-test
-diskutil unmount ~/Mounts/sshfs-test
-```
-
-Ce test est valable avec macFUSE comme avec FUSE-T. Pour FUSE-T, verifier aussi que l'application dispose de l'autorisation macOS `Volumes reseau` si le dossier monte n'est pas lisible.
-
-Exemple Windows :
-
-```powershell
-sshfs.exe user@example.com:/home/user X:
-```
-
-Les details d'installation et de verification sont dans [install.md](install.md).
-
-## Verifier le code
-
-Pour lancer le lint :
+Lancer le lint sans modifier les fichiers :
 
 ```bash
 npm run lint
 ```
 
-Pour appliquer les corrections automatiques ESLint :
+Appliquer volontairement les corrections automatiques ESLint :
 
 ```bash
 npm run lint:fix
 ```
 
-La CI utilise `npm run lint` sans correction automatique afin de signaler toute erreur dans les fichiers valides.
+Tester le parseur des processus SSHFS :
 
-## Compiler uniquement Electron/Vite
+```bash
+npm run test:process
+```
 
-Cette commande verifie que le process principal et le renderer compilent, sans produire d'installateur :
+La CI exécute `lint` et `test:process` sans correction automatique afin de signaler les erreurs présentes dans les fichiers versionnés.
+
+## Compiler Electron et Vite
+
+Cette vérification compile le processus principal et le renderer sans produire d'installateur :
 
 ```bash
 npm run build:clean-output
 node scripts/run-electron-vite.cjs build
 ```
 
-C'est le test de build le plus rapide pendant le developpement multi-OS.
+C'est le contrôle de build le plus rapide pendant le développement multi-OS.
 
 ## Compiler sans installateur
 
-Pour generer une application non empaquetee dans un installateur :
+Pour générer une application non empaquetée :
 
 ```bash
 npm run build:dir
 ```
 
-Le resultat est cree dans un sous-dossier de `build/`, par exemple :
+Le résultat est créé dans un sous-dossier de `build/`, par exemple `build/win-unpacked/`. Le dossier exact dépend de l'OS utilisé.
 
-```text
-build/win-unpacked/
-```
-
-Selon l'OS utilise pour lancer la commande, electron-builder peut produire un dossier different.
-
-## Compiler l'installateur Windows
-
-Pour generer l'installateur NSIS Windows :
-
-```bash
-npm run build
-```
-
-Le fichier d'installation est cree dans le dossier `build/`, avec un nom proche de :
-
-```text
-sshfs-win-manager-evo-setup-v2.3.2.exe
-```
-
-Le nom exact depend de la version definie dans `package.json`.
-
-## Packaging par plateforme
-
-Des scripts explicites existent pour chaque plateforme :
-
-```bash
-npm run build:win
-npm run build:linux
-npm run build:mac
-```
-
-Et pour generer uniquement un dossier non empaquete :
+Des commandes explicites permettent de cibler une plateforme :
 
 ```bash
 npm run build:dir:win
@@ -188,72 +129,104 @@ npm run build:dir:linux
 npm run build:dir:mac
 ```
 
-Cibles configurees :
+## Créer les paquets d'installation
 
-- Windows : NSIS
-- Linux : AppImage, deb, rpm
-- macOS : dmg, zip
+Utiliser le script correspondant à la plateforme :
 
-Les workflows GitHub Actions automatisent les controles et le packaging :
+```bash
+npm run build:win
+npm run build:linux
+npm run build:mac
+```
 
-- `CI` s'execute sur les push et pull requests vers `master` ;
-- `Release builds` peut etre lance manuellement pour recuperer les artefacts ;
-- un tag `v*` correspondant a la version de `package.json` cree en plus une release GitHub en brouillon.
+Cibles configurées :
 
-Le workflow de release produit Windows x64, Linux x64, macOS Apple Silicon et macOS Intel. Les artefacts d'un lancement manuel sont conserves pendant 14 jours.
+- Windows : installateur NSIS `.exe`
+- Linux : `.AppImage`, `.deb` et `.rpm`
+- macOS : `.dmg` et `.zip`
 
-Points a traiter avant publication stable :
+Les fichiers sont créés dans `build/`. Leur nom reprend la version définie dans `package.json`, par exemple `sshfs-manager-evo-setup-v2.4.4.exe`.
 
-- tester les paquets Linux sur plusieurs distributions ;
-- tester le build macOS sur une machine macOS, idealement Intel et Apple Silicon ;
-- prevoir signature et notarization si l'application doit etre distribuee hors developpement local.
-
-Sur Debian, Ubuntu ou Linux Mint, la cible `rpm` demande l'outil systeme `rpm` :
+Sous Debian, Ubuntu ou Linux Mint, la construction de la cible RPM demande également :
 
 ```bash
 sudo apt install rpm
 ```
 
-## Generer les icones
+Avant une publication stable, tester les paquets Linux sur plusieurs distributions et les paquets macOS sur Apple Silicon et Intel. Les binaires distribués publiquement devront idéalement être signés ; macOS demande en plus une notarisation.
+
+## GitHub Actions
+
+Deux workflows séparent la validation continue de la fabrication des installateurs.
+
+### CI
+
+Le workflow `CI` s'exécute automatiquement :
+
+- à chaque push vers `master` ;
+- à la création ou à la mise à jour d'une pull request vers `master` ;
+- manuellement depuis `Actions` > `CI` > `Run workflow`.
+
+Il installe les dépendances avec `npm ci`, lance le lint, teste le parseur SSHFS et vérifie un build Linux non empaqueté.
+
+### Builds de release
+
+Le workflow `Release builds` peut être lancé manuellement depuis l'onglet `Actions`. Il produit des artefacts téléchargeables pendant 14 jours :
+
+- Windows x64 ;
+- Linux x64 ;
+- macOS Apple Silicon ;
+- macOS Intel.
+
+Pour préparer une release, mettre à jour la version dans `package.json`, puis pousser le tag correspondant :
+
+```bash
+git tag v2.4.5
+git push origin v2.4.5
+```
+
+Le tag doit correspondre exactement à la version du paquet. Le workflow crée alors une release GitHub en brouillon contenant les installateurs et `SHA256SUMS.txt`. La publication du brouillon reste manuelle.
+
+Les paquets ne sont actuellement ni signés ni notariés. Une release manuelle sans tag produit seulement les artefacts et ne crée aucune release GitHub.
+
+## Générer les icônes
 
 ```bash
 npm run icons:generate
 ```
 
-La source principale du logo est `build/icons/sshfs-evo-logo.svg`.
+La source principale est `build/icons/sshfs-evo-logo.svg`. Le script génère :
 
-Le script genere :
-
-- les PNG dans `build/icons/`
-- les fichiers `.ico` utilises par le build Windows
-- le fichier `.icns` utilise par le build macOS
-- les icones utilisees a l'execution dans `static/`
+- les fichiers PNG dans `build/icons/` ;
+- les fichiers `.ico` du build Windows ;
+- le fichier `.icns` du build macOS ;
+- les icônes utilisées à l'exécution dans `static/`.
 
 ## Nettoyer les builds
-
-Pour nettoyer les fichiers generes par le build Electron/Vue :
 
 ```bash
 npm run build:clean
 ```
 
-## Audit securite
+Cette commande supprime les fichiers générés par le build Electron/Vue.
 
-Pour verifier les vulnerabilites npm :
+## Audit de sécurité
+
+Pour vérifier les vulnérabilités connues des dépendances :
 
 ```bash
 npm audit
 ```
 
-L'objectif actuel est `found 0 vulnerabilities`.
+Examiner les mises à jour proposées avant d'utiliser `npm audit fix` et ne pas employer `--force` sans avoir évalué les changements majeurs associés.
 
 ## Notes multi-OS
 
 - Windows utilise `src/renderer/process/ProcessHandlerWin.js`.
 - Linux utilise `src/renderer/process/ProcessHandlerLinux.js`.
 - macOS utilise `src/renderer/process/ProcessHandlerMac.js`.
-- Le handler macOS accepte macFUSE et FUSE-T. Un montage n'est considere connecte qu'apres un message d'authentification SSH ; un evenement FUSE local comme `INIT` ne suffit pas.
-- Les infos de plateforme et les points de montage automatiques sont centralises dans `src/renderer/platform/index.js`.
-- Sous Linux, le point de montage auto est `~/sshfs-win-manager-evo/<nom-connexion>`.
-- Sous macOS, le point de montage auto est `~/Mounts/sshfs-win-manager-evo/<nom-connexion>`.
-- Vite reste sur la derniere branche 7 compatible avec `electron-vite@5`. Vite 8 existe, mais `electron-vite@5` ne le declare pas encore dans ses peer dependencies.
+- Le handler macOS accepte macFUSE et FUSE-T. Un montage n'est considéré connecté qu'après un message d'authentification SSH ; un événement FUSE local comme `INIT` ne suffit pas.
+- Les informations de plateforme et les points de montage automatiques sont centralisés dans `src/renderer/platform/index.js`.
+- Sous Linux, le point de montage automatique est `~/sshfs-win-manager-evo/<nom-connexion>`.
+- Sous macOS, le point de montage automatique est `~/Mounts/sshfs-win-manager-evo/<nom-connexion>`.
+- Vite reste sur la dernière branche 7 compatible avec `electron-vite@5`. Vite 8 existe, mais `electron-vite@5` ne la déclare pas encore dans ses peer dependencies.

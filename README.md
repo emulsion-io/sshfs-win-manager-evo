@@ -2,7 +2,7 @@
 
 Interface graphique multi-plateforme pour monter des dossiers distants SSH/SFTP avec SSHFS.
 
-SSHFS-Win Manager Evo est un fork modernisé de [SSHFS-Win Manager](https://github.com/evsar3/sshfs-win-manager), créé à l'origine par Evandro Araujo. Cette édition ajoute une interface revue, de nouveaux modes d'authentification, des outils de gestion des connexions et une préparation multi-OS : Windows reste supporté, Linux est disponible en test, et macOS arrive bientôt.
+SSHFS-Win Manager Evo est un fork modernisé de [SSHFS-Win Manager](https://github.com/evsar3/sshfs-win-manager), créé à l'origine par Evandro Araujo. Cette édition ajoute une interface revue, de nouveaux modes d'authentification, des outils de gestion des connexions et une prise en charge multi-OS : Windows reste supporté, tandis que Linux et macOS sont disponibles en test.
 
 ## Aperçu
 
@@ -23,7 +23,7 @@ Ajout d'une connexion :
 ## Fonctionnalités
 
 - Montage de dossiers distants SSH/SFTP via SSHFS.
-- Support Windows via SSHFS-Win, Linux via `sshfs`, et préparation macOS via macFUSE/SSHFS.
+- Support Windows via SSHFS-Win, Linux via `sshfs`, et macOS via macFUSE ou FUSE-T.
 - Gestion de plusieurs connexions avec favoris, recherche et tri.
 - Fiche détaillée par connexion avec statut, host, port, utilisateur, chemin distant et point de montage.
 - Icône personnalisable par connexion, affichée dans la liste et dans la fiche détail.
@@ -73,51 +73,20 @@ Fonctionnement :
 
 Important : si la passkey est perdue, les mots de passe chiffrés ne peuvent pas être récupérés. Les connexions restent présentes, mais les secrets devront être ressaisis.
 
-## Prérequis
-
-SSHFS-Win Manager Evo pilote le binaire SSHFS disponible sur votre système. Il faut donc installer les composants SSHFS/FUSE adaptés à votre OS avant de lancer une vraie connexion.
-
-### Windows
-
-- [WinFsp](https://winfsp.dev/)
-- [SSHFS-Win](https://github.com/billziss-gh/sshfs-win)
-
-L'application pilote ensuite `sshfs.exe` et monte les dossiers distants comme des lecteurs Windows.
-
-### Linux
-
-- `sshfs`
-- FUSE/fuse3
-
-Exemple Debian, Ubuntu, Linux Mint :
-
-```bash
-sudo apt update
-sudo apt install sshfs fuse3
-```
-
-Pour construire les paquets Linux depuis Ubuntu/Debian, installer aussi :
-
-```bash
-sudo apt install rpm
-```
-
-### macOS
-
-- [macFUSE](https://macfuse.github.io/)
-- SSHFS pour macFUSE
-
-macOS peut demander d'autoriser macFUSE dans `Réglages système` > `Confidentialité et sécurité`, puis de redémarrer.
-
-Le guide détaillé par OS est disponible dans [install.md](install.md).
-
 ## Installation
 
-1. Installez les prérequis SSHFS de votre OS.
-2. Installez ou compilez SSHFS-Win Manager Evo.
-3. Ajoutez une connexion.
-4. Choisissez une lettre de lecteur sous Windows ou un chemin de montage sous Linux/macOS.
-5. Cliquez sur `Connecter`.
+SSHFS-Win Manager Evo pilote le moteur SSHFS installé sur votre système. Suivez directement le guide correspondant à votre plateforme :
+
+- [Windows : WinFsp et SSHFS-Win](install.md#windows)
+- [Linux : SSHFS et FUSE](install.md#linux)
+- [macOS : macFUSE ou FUSE-T](install.md#macos)
+
+Ensuite :
+
+1. Téléchargez le paquet adapté depuis la [dernière release](https://github.com/emulsion-io/sshfs-win-manager-evo/releases/latest), puis installez l'application.
+2. Ajoutez une connexion.
+3. Choisissez une lettre de lecteur sous Windows ou un chemin de montage sous Linux/macOS.
+4. Cliquez sur `Connecter`.
 
 ## Langues
 
@@ -130,33 +99,18 @@ Langues disponibles actuellement :
 
 La langue se change depuis `Paramètres` > `Langue`. Le choix est enregistré dans la configuration locale et réappliqué au prochain lancement.
 
-## Développement
-
-Les informations de développement, de build, de lint et de génération des icônes sont regroupées dans [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Builds automatisés
-
-GitHub Actions vérifie automatiquement le lint, les tests du parseur SSHFS et le build applicatif à chaque push ou pull request vers `master`.
-
-Le workflow `Release builds` peut être lancé manuellement depuis l'onglet `Actions` pour produire des artefacts téléchargeables pendant 14 jours : installateur Windows x64, paquets Linux x64, ainsi que dmg et zip macOS pour Apple Silicon et Intel.
-
-Pour préparer une release, mettre à jour la version dans `package.json`, puis pousser le tag correspondant :
-
-```bash
-git tag v2.4.5
-git push origin v2.4.5
-```
-
-Le tag doit correspondre exactement à la version du paquet. Une release GitHub en brouillon est alors créée avec tous les installateurs et le fichier `SHA256SUMS.txt`. Les paquets ne sont actuellement ni signés ni notariés ; la publication du brouillon reste volontairement manuelle.
-
 ## Notes importantes
 
 - Le mode `Auto (next free letter)` est géré par l'application sous Windows : une vraie lettre libre est choisie avant le lancement de SSHFS-Win.
 - Sous Linux, les points de montage automatiques sont créés sous `~/sshfs-win-manager-evo`.
-- Sous macOS, les points de montage automatiques sont prévus sous `~/Mounts/sshfs-win-manager-evo`. Le support macOS est en préparation.
+- Sous macOS, les points de montage automatiques sont créés sous `~/Mounts/sshfs-win-manager-evo`.
 - Certaines authentifications interactives dépendent fortement de la configuration OpenSSH/PAM du serveur.
 - Pour les clés protégées par passphrase et les challenges PAM/OTP, l'application prépare les réponses avant de lancer SSHFS via `SSH_ASKPASS`.
 - Les images personnalisées de connexions sont stockées dans les données de configuration sous forme de data URL.
+
+## Contribution
+
+Le développement local, le lint, les tests, le packaging et les builds GitHub Actions sont documentés dans [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Projet original
 

@@ -1,15 +1,15 @@
-# Prerequis Linux et macOS
+# Installation et prérequis
 
-Cette page liste ce qu'il faut installer avant de tester SSHFS-Win Manager Evo sur Linux ou macOS.
+Cette page liste ce qu'il faut installer avant d'utiliser SSHFS-Win Manager Evo sur Windows, Linux ou macOS.
 
-L'application ne fournit pas le moteur SSHFS elle-meme : elle lance le binaire `sshfs` installe sur le systeme, puis utilise FUSE pour exposer le dossier distant comme un dossier local.
+L'application ne fournit pas le moteur SSHFS elle-même : elle lance le binaire `sshfs` installé sur le système, puis utilise FUSE pour exposer le dossier distant comme un dossier local.
 
 ## Sommaire
 
 - [Windows](#windows)
 - [Linux](#linux)
 - [macOS](#macos)
-- [Points de montage utilises par l'application](#points-de-montage-utilises-par-lapplication)
+- [Points de montage utilisés par l'application](#points-de-montage-utilisés-par-lapplication)
 - [Serveur distant](#serveur-distant)
 - [Sources utiles](#sources-utiles)
 
@@ -20,19 +20,19 @@ Sur Windows, installer :
 - WinFsp : <https://winfsp.dev/>
 - SSHFS-Win : <https://github.com/billziss-gh/sshfs-win>
 
-SSHFS-Win depend de WinFsp. Installer WinFsp en premier, puis SSHFS-Win.
+SSHFS-Win dépend de WinFsp. Installer WinFsp en premier, puis SSHFS-Win.
 
 ### Chemin SSHFS attendu par l'application
 
-Le chemin par defaut est :
+Le chemin par défaut est :
 
 ```text
 C:\Program Files\SSHFS-Win\bin\sshfs.exe
 ```
 
-Si SSHFS-Win est installe ailleurs, renseigner le chemin exact dans `Parametres` > `Binaire SSHFS`.
+Si SSHFS-Win est installé ailleurs, renseigner le chemin exact dans `Paramètres` > `Binaire SSHFS`.
 
-### Verifier l'installation Windows
+### Vérifier l'installation Windows
 
 Dans PowerShell :
 
@@ -41,17 +41,17 @@ Test-Path "C:\Program Files\SSHFS-Win\bin\sshfs.exe"
 & "C:\Program Files\SSHFS-Win\bin\sshfs.exe" --version
 ```
 
-La premiere commande doit retourner `True`.
+La première commande doit retourner `True`.
 
 ### Test manuel Windows
 
-Avant de tester dans l'application, verifier qu'un montage SSHFS simple fonctionne :
+Avant de tester dans l'application, vérifier qu'un montage SSHFS simple fonctionne :
 
 ```powershell
 & "C:\Program Files\SSHFS-Win\bin\sshfs.exe" user@example.com:/home/user X:
 ```
 
-Pour demonter le lecteur :
+Pour démonter le lecteur :
 
 ```powershell
 net use X: /delete
@@ -65,53 +65,47 @@ Adapter `X:` avec une lettre libre.
 
 ```bash
 sudo apt update
-sudo apt install sshfs fuse3
+sudo apt install sshfs
 ```
 
-Sur certaines versions, `sshfs` installe deja la dependance FUSE necessaire. Garder `fuse3` dans la commande rend le prerequis explicite.
-
-Pour construire les paquets Linux depuis Debian, Ubuntu ou Linux Mint, installer aussi `rpm` :
-
-```bash
-sudo apt install rpm
-```
+Le gestionnaire de paquets installe automatiquement FUSE et les bibliothèques nécessaires avec SSHFS.
 
 ### Fedora
 
 ```bash
-sudo dnf install fuse-sshfs fuse3
+sudo dnf install fuse-sshfs
 ```
 
 ### Arch Linux, Manjaro
 
 ```bash
-sudo pacman -S sshfs fuse3
+sudo pacman -S sshfs
 ```
 
 ### openSUSE
 
 ```bash
-sudo zypper install sshfs fuse3
+sudo zypper install sshfs
 ```
 
-### Verifier l'installation Linux
+### Vérifier l'installation Linux
 
 ```bash
 which sshfs
 sshfs --version
 ```
 
-Le chemin attendu par defaut dans l'application est :
+Le chemin attendu par défaut dans l'application est :
 
 ```text
 /usr/bin/sshfs
 ```
 
-Si `sshfs` est installe ailleurs, renseigner ce chemin dans `Parametres` > `Binaire SSHFS`.
+Si `sshfs` est installé ailleurs, renseigner ce chemin dans `Paramètres` > `Binaire SSHFS`.
 
 ### Test manuel Linux
 
-Avant de tester dans l'application, verifier qu'un montage SSHFS simple fonctionne :
+Avant de tester dans l'application, vérifier qu'un montage SSHFS simple fonctionne :
 
 ```bash
 mkdir -p ~/sshfs-test
@@ -128,13 +122,13 @@ fusermount -u ~/sshfs-test
 
 ### Option `allow_other`
 
-L'application n'ajoute pas `allow_other` par defaut sur Linux. Si vous l'ajoutez dans les options avancees SSHFS, il peut etre necessaire d'activer cette option dans :
+L'application n'ajoute pas `allow_other` par défaut sur Linux. Si vous l'ajoutez dans les options avancées SSHFS, il peut être nécessaire d'activer cette option dans :
 
 ```text
 /etc/fuse.conf
 ```
 
-La ligne suivante doit alors etre presente et non commentee :
+La ligne suivante doit alors être présente et non commentée :
 
 ```text
 user_allow_other
@@ -145,9 +139,9 @@ user_allow_other
 Sur macOS, l'application prend en charge deux moteurs. Choisir une seule de ces solutions :
 
 - macFUSE avec SSHFS pour macFUSE ;
-- FUSE-T avec `sshfs-fuse-t`, une alternative sans extension noyau qui expose le montage via les mecanismes reseau de macOS.
+- FUSE-T avec `sshfs-fuse-t`, une alternative sans extension noyau qui expose le montage via les mécanismes réseau de macOS.
 
-Dans les deux cas, l'application lance le binaire `sshfs` installé sur le système. Le choix du moteur reste donc entièrement contrôlé par l'installation et par le chemin configuré dans `Parametres` > `Binaire SSHFS`.
+Dans les deux cas, l'application lance le binaire `sshfs` installé sur le système. Le choix du moteur reste donc entièrement contrôlé par l'installation et par le chemin configuré dans `Paramètres` > `Binaire SSHFS`.
 
 ### Option A : macFUSE
 
@@ -175,7 +169,7 @@ La formule installe FUSE-T et son implémentation SSHFS. Après l'installation, 
 
 Comme FUSE-T expose notamment les montages comme des volumes réseau locaux, macOS peut demander l'autorisation d'accéder aux `Volumes réseau` dans `Réglages système` > `Confidentialité et sécurité` > `Fichiers et dossiers`.
 
-### Chemins SSHFS cherches par l'application
+### Chemins SSHFS cherchés par l'application
 
 L'application teste ces chemins dans l'ordre :
 
@@ -185,15 +179,15 @@ L'application teste ces chemins dans l'ordre :
 /usr/bin/sshfs
 ```
 
-Le chemin par defaut est :
+Le chemin par défaut est :
 
 ```text
 /opt/homebrew/bin/sshfs
 ```
 
-Le chemin `/opt/homebrew/bin/sshfs` reste le choix par defaut. Une installation FUSE-T place habituellement son binaire dans `/usr/local/bin/sshfs`, qui est detecte automatiquement si le chemin par defaut n'existe pas. Si SSHFS est installe ailleurs, renseigner le chemin exact dans `Parametres` > `Binaire SSHFS`.
+Le chemin `/opt/homebrew/bin/sshfs` reste le choix par défaut. Une installation FUSE-T place habituellement son binaire dans `/usr/local/bin/sshfs`, qui est détecté automatiquement si le chemin par défaut n'existe pas. Si SSHFS est installé ailleurs, renseigner le chemin exact dans `Paramètres` > `Binaire SSHFS`.
 
-### Verifier l'installation macOS
+### Vérifier l'installation macOS
 
 ```bash
 which sshfs
@@ -217,11 +211,11 @@ Si `diskutil unmount` ne suffit pas :
 umount ~/Mounts/sshfs-test
 ```
 
-## Points de montage utilises par l'application
+## Points de montage utilisés par l'application
 
 ### Linux
 
-Si le champ `Chemin de montage` est vide, l'application cree automatiquement un dossier sous :
+Si le champ `Chemin de montage` est vide, l'application crée automatiquement un dossier sous :
 
 ```text
 ~/sshfs-win-manager-evo/<nom-connexion>
@@ -229,21 +223,21 @@ Si le champ `Chemin de montage` est vide, l'application cree automatiquement un 
 
 ### macOS
 
-Si le champ `Chemin de montage` est vide, l'application cree automatiquement un dossier sous :
+Si le champ `Chemin de montage` est vide, l'application crée automatiquement un dossier sous :
 
 ```text
 ~/Mounts/sshfs-win-manager-evo/<nom-connexion>
 ```
 
-### Chemin personnalise
+### Chemin personnalisé
 
 Il est possible de choisir un dossier local dans le formulaire de connexion. Le dossier peut être vide ou déjà existant, mais il doit être accessible en écriture par l'utilisateur courant.
 
 ## Serveur distant
 
-Le serveur distant doit accepter les connexions SSH et exposer le sous-systeme SFTP. Dans la majorite des installations OpenSSH, SFTP est deja actif.
+Le serveur distant doit accepter les connexions SSH et exposer le sous-système SFTP. Dans la majorité des installations OpenSSH, SFTP est déjà actif.
 
-Verifier la connexion SSH avant de tester l'application :
+Vérifier la connexion SSH avant de tester l'application :
 
 ```bash
 ssh -p 22 user@example.com
