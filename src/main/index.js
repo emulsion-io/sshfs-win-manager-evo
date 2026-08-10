@@ -25,6 +25,7 @@ const userDataPath = path.join(app.getPath('appData'), 'sshfs-win-manager-evo')
 
 let mainWindow = null
 let tray = null
+let backgroundNotification = null
 const windows = new Map()
 
 const legacyRendererWebPreferences = {
@@ -302,11 +303,30 @@ ipcMain.on('app:show-background-notification', (event, message) => {
     return
   }
 
-  new Notification({
+  if (backgroundNotification) {
+    backgroundNotification.close()
+  }
+
+  const notification = new Notification({
     title: appName,
     body,
     icon: getAppIconPath()
-  }).show()
+  })
+
+  backgroundNotification = notification
+
+  notification.once('click', () => {
+    showMainWindow()
+    notification.close()
+  })
+
+  notification.once('close', () => {
+    if (backgroundNotification === notification) {
+      backgroundNotification = null
+    }
+  })
+
+  notification.show()
 })
 
 ipcMain.handle('dialog:select-private-key', async () => {
@@ -529,6 +549,12 @@ if (isSecondInstance) {
       minimizable: true,
       resizable: true
     })
+
+    if (isWindows && typeof Notification.handleActivation === 'function') {
+      Notification.handleActivation(() => {
+        showMainWindow()
+      })
+    }
 
     if (!startHidden) {
       mainWindow.once('ready-to-show', () => {
