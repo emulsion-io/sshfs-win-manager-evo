@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.4.4
+
+- Préservation du mot de passe stocké en clair lorsqu'une connexion est enregistrée sans saisir un nouveau mot de passe.
+- Correction du démarrage avec `--systray` afin que la fenêtre principale reste réellement masquée.
+- Vérification d'un montage FUSE actif sous Linux et macOS au lieu de se fier à la seule existence du dossier.
+- Ajout des répertoires système usuels au `PATH` transmis à SSHFS sous Linux et macOS.
+- Omission de l'option `-ovolname` sous Windows lorsqu'une connexion n'a pas de nom.
+
 ## 2.4.3
 
 - Mise en évidence de l'état de la session de secrets dans la barre latérale.
