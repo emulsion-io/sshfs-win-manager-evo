@@ -2,7 +2,13 @@ export default {
   app: {
     name: 'SSHFS Manager Evo',
     serviceActive: 'Service actif',
-    serviceActiveShort: 'Actif'
+    serviceActiveShort: 'Actif',
+    sessionUnlockedShort: 'Actif',
+    sessionExpiredShort: 'Expiré',
+    sessionLockedShort: 'Verrouillé',
+    sessionExpiresAt: 'Session déverrouillée jusqu’au {date}',
+    sessionExpired: 'Session expirée',
+    sessionLocked: 'Session verrouillée'
   },
   nav: {
     expand: 'Déplier le menu',
@@ -70,6 +76,8 @@ export default {
     connectionsCount: '{count} connexions',
     connectedCount: '{count} connectées',
     busyCount: '{count} en cours',
+    lockSession: 'Verrouiller la session',
+    lockSessionTooltip: 'Verrouiller maintenant et redemander la passkey à la prochaine utilisation',
     debugOutput: 'Debug output',
     clearDebug: 'Vider les logs',
     copyDebug: 'Copier les logs'
@@ -191,6 +199,7 @@ export default {
     cannotConnect: 'Impossible de se connecter à "{name}" : {error}',
     passkeyInvalid: 'Passkey invalide : impossible de déchiffrer le mot de passe.',
     passkeyUnlocked: 'Passkey validée : secrets déverrouillés.',
+    passkeyLocked: 'Session verrouillée : la passkey sera redemandée à la prochaine utilisation.',
     trayStillRunning: 'Le programme continue de tourner dans la zone de notification',
     debugCopied: 'Logs copiés dans le presse-papiers',
     sshCommandCopied: 'Commande SSH copiée dans le presse-papiers',

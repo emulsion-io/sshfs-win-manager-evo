@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.3
+
+- Mise en évidence de l'état de la session de secrets dans la barre latérale.
+- Affichage de la date et de l'heure d'expiration de la session dans le tooltip lorsque celle-ci est active.
+- Passage du voyant en orange avec les états `Expiré` ou `Verrouillé` lorsque les secrets ne sont plus accessibles.
+- Ajout d'un bouton pour verrouiller manuellement la session et redemander la passkey à la prochaine utilisation.
+
 ## 2.4.2
 
 - Ajout d'un bouton `>_` pour ouvrir directement une connexion SSH dans un terminal.

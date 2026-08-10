@@ -9,6 +9,7 @@ const SALT_LENGTH = 16
 let passkey = null
 let expiresAt = 0
 let clearTimer = null
+let sessionState = 'locked'
 
 function now () {
   return Date.now()
@@ -31,15 +32,17 @@ function rememberPasskey (value, retentionMs) {
 
   passkey = value
   expiresAt = now() + retentionMs
+  sessionState = 'unlocked'
 
   clearTimer = setTimeout(() => {
-    lock()
+    lock('expired')
   }, retentionMs)
 }
 
-function lock () {
+function lock (reason = 'locked') {
   passkey = null
   expiresAt = 0
+  sessionState = reason
   clearTimerIfNeeded()
 }
 
@@ -49,11 +52,20 @@ function isUnlocked () {
   }
 
   if (expiresAt > 0 && expiresAt <= now()) {
-    lock()
+    lock('expired')
     return false
   }
 
   return true
+}
+
+function getSessionState () {
+  const unlocked = isUnlocked()
+
+  return {
+    status: unlocked ? 'unlocked' : sessionState,
+    expiresAt: unlocked ? expiresAt : 0
+  }
 }
 
 function deriveKey (value, salt) {
@@ -196,5 +208,6 @@ export default {
   decryptWithPasskey,
   encryptSecret,
   decryptSecret,
-  getRetentionMs
+  getRetentionMs,
+  getSessionState
 }

@@ -26,10 +26,10 @@
           <span class="nav-label">{{ $t('nav.about') }}</span>
         </button>
 
-        <div class="service-status">
+        <div class="service-status" :class="`session-${secretSession.status}`">
           <span class="status-dot"></span>
-          <strong>{{ $t('app.serviceActiveShort') }}</strong>
-          <span class="service-status-tooltip">{{ $t('app.serviceActive') }} · v{{ appVersion }}</span>
+          <strong>{{ secretSessionLabel }}</strong>
+          <span class="service-status-tooltip">{{ secretSessionTooltip }} · v{{ appVersion }}</span>
         </div>
       </aside>
 
@@ -467,6 +467,16 @@
           <span><Icon icon="sshfsFolder"/> {{ $t('detail.connectionsCount', { count: connections.length }) }}</span>
           <span class="success"><span class="status-dot"></span> {{ $t('detail.connectedCount', { count: connectedConnections.length }) }}</span>
           <span class="warning"><span class="status-dot"></span> {{ $t('detail.busyCount', { count: busyConnections.length }) }}</span>
+          <button
+            class="lock-session-button"
+            type="button"
+            :disabled="secretSession.status !== 'unlocked'"
+            v-tooltip="$t('detail.lockSessionTooltip')"
+            @click="lockSecretSession"
+          >
+            <Icon icon="lock"/>
+            {{ $t('detail.lockSession') }}
+          </button>
         </div>
 
         <div v-show="appSettings.showDebugPanel" class="debug-panel">
@@ -560,6 +570,23 @@ export default {
   },
 
   methods: {
+    refreshSecretSession () {
+      this.secretSession = SecretManager.getSessionState()
+    },
+
+    lockSecretSession () {
+      SecretManager.lock()
+      this.refreshSecretSession()
+      this.notify(this.$t('notifications.passkeyLocked'))
+    },
+
+    formatSecretSessionExpiration (timestamp) {
+      return new Intl.DateTimeFormat(this.appSettings.language || 'fr', {
+        dateStyle: 'short',
+        timeStyle: 'medium'
+      }).format(new Date(timestamp))
+    },
+
     showConnections () {
       this.activeSection = 'connections'
     },
@@ -1531,6 +1558,28 @@ export default {
       return this.connections.filter(conn => conn.status === 'connecting' || conn.status === 'disconnecting')
     },
 
+    secretSessionLabel () {
+      if (this.secretSession.status === 'unlocked') {
+        return this.$t('app.sessionUnlockedShort')
+      }
+
+      return this.secretSession.status === 'expired'
+        ? this.$t('app.sessionExpiredShort')
+        : this.$t('app.sessionLockedShort')
+    },
+
+    secretSessionTooltip () {
+      if (this.secretSession.status === 'unlocked') {
+        return this.$t('app.sessionExpiresAt', {
+          date: this.formatSecretSessionExpiration(this.secretSession.expiresAt)
+        })
+      }
+
+      return this.secretSession.status === 'expired'
+        ? this.$t('app.sessionExpired')
+        : this.$t('app.sessionLocked')
+    },
+
     canCollapseDetailPanel () {
       return true
     },
@@ -1625,11 +1674,18 @@ export default {
       notificationToast: null,
       notificationTimer: null,
       debugOutput: '',
-      appVersion: ''
+      appVersion: '',
+      secretSession: SecretManager.getSessionState(),
+      secretSessionTimer: null
     }
   },
 
   mounted () {
+    this.refreshSecretSession()
+    this.secretSessionTimer = setInterval(() => {
+      this.refreshSecretSession()
+    }, 1000)
+
     this.settingsForm = normalizeSettings(this.appSettings)
     setTimeout(async () => {
       await this.migratePlainTextPasswords()
@@ -1734,6 +1790,13 @@ export default {
         this.notify(this.$t('notifications.processTimeout', { name: conn.name }), 'error-icon')
       }
     })
+  },
+
+  beforeUnmount () {
+    if (this.secretSessionTimer) {
+      clearInterval(this.secretSessionTimer)
+      this.secretSessionTimer = null
+    }
   }
 }
 </script>
@@ -1909,6 +1972,22 @@ export default {
   color: var(--app-success);
   font-size: 10px;
   line-height: 1;
+}
+
+.service-status.session-expired strong,
+.service-status.session-locked strong {
+  color: #f7b731;
+}
+
+.service-status.session-expired .status-dot,
+.service-status.session-locked .status-dot {
+  background: #f7b731;
+  box-shadow: 0 0 14px color-mix(in srgb, #f7b731 60%, transparent);
+}
+
+.service-status.session-expired .service-status-tooltip,
+.service-status.session-locked .service-status-tooltip {
+  border-color: color-mix(in srgb, #f7b731 42%, transparent);
 }
 
 .service-status-tooltip {
@@ -2967,6 +3046,37 @@ export default {
   background: #f7b731;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #ffffff 18%, transparent),
     0 0 12px color-mix(in srgb, #f7b731 38%, transparent);
+}
+
+.lock-session-button {
+  min-height: 30px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, #f7b731 42%, var(--app-border));
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #f7b731;
+  background: color-mix(in srgb, #f7b731 9%, transparent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.lock-session-button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.lock-session-button:hover:not(:disabled) {
+  background: color-mix(in srgb, #f7b731 16%, transparent);
+}
+
+.lock-session-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .debug-panel {
