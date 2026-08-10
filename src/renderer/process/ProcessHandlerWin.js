@@ -23,11 +23,13 @@ class ProcessHandlerWin {
         conn.preferredMountPoint = mountPoint
       }
 
+      const volumeName = String(conn.name || '').trim().slice(0, 32)
+
       let cmdArgs = [
         `${conn.user}@${this.getRemoteHost(conn.host)}:${conn.folder}`,
         mountPoint,
         `-p${conn.port}`,
-        `-ovolname=${conn.name.substr(0, 32)}`,
+        ...(volumeName ? [`-ovolname=${volumeName}`] : []),
         '-odebug',
         '-ologlevel=debug1',
         '-oStrictHostKeyChecking=no',
