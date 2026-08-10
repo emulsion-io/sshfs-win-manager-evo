@@ -503,7 +503,6 @@
 </template>
 
 <script>
-import fs from 'fs'
 import { ipcRenderer } from 'electron'
 
 import { v4 as uuid } from 'uuid'
@@ -513,7 +512,7 @@ import SecretManager from '@/SecretManager.js'
 import { setLocale } from '@/i18n/index.js'
 import { supportedLocaleOptions } from '@/i18n/locales.js'
 import { defaultSettings, normalizeSettings } from '@/store/SettingsDefaults.js'
-import { currentPlatform, getConnectionMountPoint } from '@/platform/index.js'
+import { currentPlatform, getConnectionMountPoint, isMountPointActive } from '@/platform/index.js'
 
 import Window from '@/components/Window/index.vue'
 import Icon from '@/components/Icon.vue'
@@ -1770,7 +1769,7 @@ export default {
     ProcessManager.on('timeout', conn => {
       const mountPoint = getConnectionMountPoint(conn)
 
-      if (fs.existsSync(mountPoint)) {
+      if (isMountPointActive(mountPoint)) {
         ProcessManager.getLastSpawnedProcess().then(process => {
           let foundConnection = this.connections.find(i => i.pid === process.pid)
 

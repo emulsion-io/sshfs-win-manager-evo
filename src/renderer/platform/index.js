@@ -1,3 +1,4 @@
+import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
@@ -82,10 +83,29 @@ function getConnectionMountPoint (conn = {}) {
   return conn.mountPoint
 }
 
+function isMountPointActive (mountPoint) {
+  if (!mountPoint || mountPoint === 'auto') {
+    return false
+  }
+
+  if (currentPlatform.id === 'win32') {
+    return fs.existsSync(mountPoint)
+  }
+
+  // Unix mount directories exist before sshfs starts. A FUSE mount is active
+  // only when the mount point is on a different device than its parent.
+  try {
+    return fs.statSync(mountPoint).dev !== fs.statSync(path.dirname(mountPoint)).dev
+  } catch {
+    return false
+  }
+}
+
 export {
   currentPlatform,
   getAutoMountPoint,
   getConnectionMountPoint,
+  isMountPointActive,
   isWindows,
   usesDriveLetters
 }
