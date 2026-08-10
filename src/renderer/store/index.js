@@ -2,11 +2,12 @@ import { createStore } from 'vuex'
 import { ipcRenderer } from 'electron'
 
 import modules from './modules/index.js'
+import { createPersistedState, hydratePersistedConnections } from '../../shared/ConnectionState.js'
 
 const STORAGE_KEY = 'sshfs-win-manager-evo-state'
 const SYNC_CHANNEL = 'sshfs-win-manager-evo-state-sync'
 
-function mergeState (currentState, savedState) {
+function mergeState (currentState, savedState, resetConnectionRuntime = false) {
   if (!savedState) {
     return currentState
   }
@@ -18,7 +19,9 @@ function mergeState (currentState, savedState) {
       ...currentState.Data,
       ...(savedState.Data || {}),
       connections: savedState.Data && Array.isArray(savedState.Data.connections)
-        ? savedState.Data.connections
+        ? resetConnectionRuntime
+          ? hydratePersistedConnections(savedState.Data.connections, currentState.Data.connections)
+          : savedState.Data.connections
         : currentState.Data.connections
     },
     Settings: {
@@ -32,18 +35,18 @@ function mergeState (currentState, savedState) {
   }
 }
 
-function createPersistedState () {
+function createStatePersistencePlugin () {
   return store => {
     let isApplyingRemoteState = false
     const channel = 'BroadcastChannel' in window ? new BroadcastChannel(SYNC_CHANNEL) : null
 
-    const applySavedState = state => {
+    const applySavedState = (state, resetConnectionRuntime = false) => {
       if (!state) {
         return
       }
 
       isApplyingRemoteState = true
-      store.replaceState(mergeState(store.state, state))
+      store.replaceState(mergeState(store.state, state, resetConnectionRuntime))
       store.dispatch('APPLY_MIGRATIONS')
       isApplyingRemoteState = false
     }
@@ -52,7 +55,7 @@ function createPersistedState () {
 
     if (savedState) {
       try {
-        applySavedState(JSON.parse(savedState))
+        applySavedState(JSON.parse(savedState), true)
       } catch {
         window.localStorage.removeItem(STORAGE_KEY)
       }
@@ -61,7 +64,7 @@ function createPersistedState () {
     store.dispatch('APPLY_MIGRATIONS')
 
     ipcRenderer.invoke('app-state:load').then(state => {
-      applySavedState(state)
+      applySavedState(state, true)
       store.dispatch('APPLY_MIGRATIONS')
     })
 
@@ -71,22 +74,28 @@ function createPersistedState () {
       }
     }
 
-    window.addEventListener('storage', event => {
-      if (event.key === STORAGE_KEY && event.newValue) {
-        applySavedState(JSON.parse(event.newValue))
-      }
-    })
+    if (!channel) {
+      window.addEventListener('storage', event => {
+        if (event.key === STORAGE_KEY && event.newValue) {
+          try {
+            applySavedState(JSON.parse(event.newValue), true)
+          } catch {
+            // Ignore malformed state written by another renderer.
+          }
+        }
+      })
+    }
 
     store.subscribe((mutation, state) => {
       if (isApplyingRemoteState) {
         return
       }
 
-      const serializedState = JSON.stringify(state)
-      const plainState = JSON.parse(serializedState)
+      const serializedState = JSON.stringify(createPersistedState(state))
+      const plainState = JSON.parse(JSON.stringify(state))
 
       window.localStorage.setItem(STORAGE_KEY, serializedState)
-      ipcRenderer.invoke('app-state:save', plainState).catch(() => {})
+      ipcRenderer.invoke('app-state:save', JSON.parse(serializedState)).catch(() => {})
 
       if (channel) {
         channel.postMessage(plainState)
@@ -98,7 +107,7 @@ function createPersistedState () {
 export default createStore({
   modules,
   plugins: [
-    createPersistedState()
+    createStatePersistencePlugin()
   ],
   strict: false
 })

@@ -6,6 +6,7 @@ import { spawn, execFile } from 'child_process'
 import { promisify } from 'util'
 
 import { applyAutostartSettings, getAutostartSettings, wasOpenedAtLogin } from './autostart.js'
+import { createPersistedState, toPersistedConnections } from '../shared/ConnectionState.js'
 
 const isWindows = process.platform === 'win32'
 const appName = 'SSHFS Manager Evo'
@@ -376,14 +377,14 @@ ipcMain.on('main-window:set-detail-collapsed', (event, payload) => {
 })
 ipcMain.handle('app-state:load', async () => {
   try {
-    return JSON.parse(await readFile(appStatePath, 'utf8'))
+    return createPersistedState(JSON.parse(await readFile(appStatePath, 'utf8')))
   } catch {
     return null
   }
 })
 ipcMain.handle('app-state:save', async (event, state) => {
   await mkdir(path.dirname(appStatePath), { recursive: true })
-  await writeFile(appStatePath, JSON.stringify(state, null, 2), 'utf8')
+  await writeFile(appStatePath, JSON.stringify(createPersistedState(state), null, 2), 'utf8')
 })
 ipcMain.handle('connections:export', async (event, payload) => {
   const result = await dialog.showSaveDialog(getSenderWindow(event), {
@@ -398,7 +399,10 @@ ipcMain.handle('connections:export', async (event, payload) => {
     return { canceled: true }
   }
 
-  await writeFile(result.filePath, JSON.stringify(payload, null, 2), 'utf8')
+  await writeFile(result.filePath, JSON.stringify({
+    ...payload,
+    connections: toPersistedConnections(Array.isArray(payload.connections) ? payload.connections : [])
+  }, null, 2), 'utf8')
 
   return {
     canceled: false,

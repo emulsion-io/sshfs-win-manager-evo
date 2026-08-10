@@ -849,7 +849,7 @@ export default {
         existingUuids.add(imported.uuid)
 
         imported.status = 'disconnected'
-        imported.pid = 0
+        imported.pid = null
         imported.favorite = typeof imported.favorite === 'boolean' ? imported.favorite : false
         imported.iconDataUrl = typeof imported.iconDataUrl === 'string' ? imported.iconDataUrl : null
         imported.preferredMountPoint = imported.preferredMountPoint || null

@@ -288,7 +288,7 @@ export default {
         key: '',
         mountPoint: usesDriveLetters() ? 'auto' : '',
         status: 'disconnected',
-        pid: 0,
+        pid: null,
         advanced: {
           customCmdlOptionsEnabled: false,
           customCmdlOptions: [],

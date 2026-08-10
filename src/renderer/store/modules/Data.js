@@ -1,3 +1,5 @@
+import { createRuntimeConnection, hydratePersistedConnections } from '../../../shared/ConnectionState.js'
+
 const state = {
   connections: []
 }
@@ -8,13 +10,13 @@ const mutations = {
   },
 
   ADD_CONNECTION (state, payload) {
-    state.connections.push(payload)
+    state.connections.push(createRuntimeConnection(payload))
   },
 
   UPDATE_CONNECTION (state, payload) {
     state.connections.forEach((item, index) => {
       if (item.uuid === payload.uuid) {
-        state.connections.splice(index, 1, payload)
+        state.connections.splice(index, 1, createRuntimeConnection(payload, item))
       }
     })
   },
@@ -23,9 +25,13 @@ const mutations = {
     const conn = state.connections.find(a => a.uuid === payload.uuid)
 
     if (conn) {
-      Object.keys(payload).forEach(key => {
-        conn[key] = payload[key]
-      })
+      if (payload.status !== undefined) {
+        conn.status = payload.status
+      }
+
+      if (payload.pid !== undefined) {
+        conn.pid = payload.pid
+      }
     }
   },
 
@@ -38,7 +44,7 @@ const mutations = {
   },
 
   IMPORT_CONNECTIONS (state, payload) {
-    state.connections = payload
+    state.connections = hydratePersistedConnections(payload)
   },
 
   MIGRATE_CONNECTIONS (state) {
