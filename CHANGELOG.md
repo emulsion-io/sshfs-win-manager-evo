@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.4.6
+
+- Ajout d'une pop-in confirmant l'enregistrement des options, avec un avertissement lorsque le réglage du démarrage automatique ne peut pas être appliqué.
+- Ouverture de la fenêtre principale lors d'un clic sur la notification indiquant que l'application continue de fonctionner dans la zone de notification.
+
 ## 2.4.5
 
 - Ajout de FUSE-T comme alternative à macFUSE sur macOS, avec détection du binaire, authentification et démontage adaptés.
