@@ -5,14 +5,13 @@ import modules from './modules/index.js'
 import { createPersistedState, hydratePersistedConnections } from '../../shared/ConnectionState.js'
 
 const STORAGE_KEY = 'sshfs-win-manager-evo-state'
-const SYNC_CHANNEL = 'sshfs-win-manager-evo-state-sync'
 let resolveStateReady
 
 const stateReady = new Promise(resolve => {
   resolveStateReady = resolve
 })
 
-function mergeState (currentState, savedState, resetConnectionRuntime = false) {
+function mergeState (currentState, savedState) {
   if (!savedState) {
     return currentState
   }
@@ -24,9 +23,7 @@ function mergeState (currentState, savedState, resetConnectionRuntime = false) {
       ...currentState.Data,
       ...(savedState.Data || {}),
       connections: savedState.Data && Array.isArray(savedState.Data.connections)
-        ? resetConnectionRuntime
-          ? hydratePersistedConnections(savedState.Data.connections, currentState.Data.connections)
-          : savedState.Data.connections
+        ? hydratePersistedConnections(savedState.Data.connections, currentState.Data.connections)
         : currentState.Data.connections
     },
     Settings: {
@@ -45,9 +42,12 @@ function createStatePersistencePlugin () {
     let isApplyingRemoteState = false
     let isStateReady = false
     let pendingRemoteState = null
-    const channel = 'BroadcastChannel' in window ? new BroadcastChannel(SYNC_CHANNEL) : null
+    let remoteStateQueue = Promise.resolve()
+    let lastSerializedState = null
 
-    const applySavedState = async (state, resetConnectionRuntime = false) => {
+    const serializeState = state => JSON.stringify(createPersistedState(state))
+
+    const applySavedState = async state => {
       if (!state) {
         return
       }
@@ -55,8 +55,9 @@ function createStatePersistencePlugin () {
       isApplyingRemoteState = true
 
       try {
-        store.replaceState(mergeState(store.state, state, resetConnectionRuntime))
+        store.replaceState(mergeState(store.state, state))
         await store.dispatch('APPLY_MIGRATIONS')
+        lastSerializedState = serializeState(store.state)
       } finally {
         isApplyingRemoteState = false
       }
@@ -87,9 +88,7 @@ function createStatePersistencePlugin () {
       }
     }
 
-    const persistState = state => {
-      const serializedState = JSON.stringify(createPersistedState(state))
-
+    const persistState = serializedState => {
       return ipcRenderer.invoke('app-state:save', JSON.parse(serializedState))
         .then(() => {
           try {
@@ -125,16 +124,20 @@ function createStatePersistencePlugin () {
         .catch(() => finish(null))
     })
 
-    if (channel) {
-      channel.onmessage = event => {
-        if (!isStateReady) {
-          pendingRemoteState = event.data
-          return
-        }
-
-        applySavedState(event.data).catch(() => {})
-      }
+    const queueRemoteState = state => {
+      remoteStateQueue = remoteStateQueue
+        .then(() => applySavedState(state))
+        .catch(() => {})
     }
+
+    ipcRenderer.on('app-state:changed', (event, state) => {
+      if (!isStateReady) {
+        pendingRemoteState = state
+        return
+      }
+
+      queueRemoteState(state)
+    })
 
     const initializeState = async () => {
       let legacyState = null
@@ -155,7 +158,7 @@ function createStatePersistencePlugin () {
 
       if (repositoryResult.status === 'loaded' && repositoryResult.state) {
         try {
-          await applySavedState(repositoryResult.state, true)
+          await applySavedState(repositoryResult.state)
           source = 'repository'
         } catch {
           // Fall through to the legacy snapshot when the repository is invalid.
@@ -164,7 +167,7 @@ function createStatePersistencePlugin () {
 
       if (source === 'defaults' && legacyState) {
         try {
-          await applySavedState(legacyState, true)
+          await applySavedState(legacyState)
           source = 'legacy'
         } catch {
           // Resolve readiness with the module defaults below.
@@ -174,19 +177,21 @@ function createStatePersistencePlugin () {
       if (source === 'defaults') {
         try {
           await store.dispatch('APPLY_MIGRATIONS')
+          lastSerializedState = serializeState(store.state)
         } catch {
           // Readiness must resolve even when a migration rejects.
         }
       }
 
-      if (pendingRemoteState) {
+      while (pendingRemoteState) {
+        const remoteState = pendingRemoteState
+        pendingRemoteState = null
+
         try {
-          await applySavedState(pendingRemoteState)
+          await applySavedState(remoteState)
         } catch {
           // The repository or legacy snapshot remains usable.
         }
-
-        pendingRemoteState = null
       }
 
       const shouldPersistInitialState = source === 'repository' || source === 'legacy' ||
@@ -196,7 +201,7 @@ function createStatePersistencePlugin () {
       resolveStateReady({ source, status: repositoryResult.status })
 
       if (shouldPersistInitialState) {
-        persistState(store.state)
+        persistState(lastSerializedState || serializeState(store.state))
       }
     }
 
@@ -210,13 +215,14 @@ function createStatePersistencePlugin () {
         return
       }
 
-      const plainState = JSON.parse(JSON.stringify(state))
+      const serializedState = serializeState(state)
 
-      persistState(state)
-
-      if (channel) {
-        channel.postMessage(plainState)
+      if (serializedState === lastSerializedState) {
+        return
       }
+
+      lastSerializedState = serializedState
+      persistState(serializedState)
     })
   }
 }

@@ -381,7 +381,19 @@ ipcMain.handle('app-state:load', async () => {
   return stateRepository.load()
 })
 ipcMain.handle('app-state:save', async (event, state) => {
-  return stateRepository.save(state)
+  const savedState = await stateRepository.save(state)
+
+  windows.forEach(win => {
+    if (!win.isDestroyed() && !win.webContents.isDestroyed() && win.webContents !== event.sender) {
+      try {
+        win.webContents.send('app-state:changed', savedState)
+      } catch {
+        // A closing renderer must not turn a successful save into an error.
+      }
+    }
+  })
+
+  return savedState
 })
 ipcMain.handle('connections:export', async (event, payload) => {
   const result = await dialog.showSaveDialog(getSenderWindow(event), {
