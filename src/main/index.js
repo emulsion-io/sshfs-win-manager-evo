@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Notification, Tray, clipboard, dialog, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, Menu, Notification, Tray, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
 import path from 'path'
 import { readFile, writeFile } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -46,6 +46,23 @@ function getAppIconPath () {
 
 function getTrayIconPath () {
   return path.join(staticPath, isWindows ? 'tray-icon.ico' : 'tray-icon.png')
+}
+
+function getTrayImage () {
+  if (process.platform !== 'darwin') {
+    return getTrayIconPath()
+  }
+
+  // The macOS menu bar draws the icon at its raw pixel size, so the 32px
+  // asset ends up oversized. A template image (drawn from its alpha channel)
+  // also keeps the dark icon visible on a dark menu bar.
+  const image = nativeImage
+    .createFromPath(getTrayIconPath())
+    .resize({ width: 18, height: 18 })
+
+  image.setTemplateImage(true)
+
+  return image
 }
 
 function spawnDetached (file, args) {
@@ -562,7 +579,7 @@ if (isSecondInstance) {
       })
     }
 
-    tray = new Tray(getTrayIconPath())
+    tray = new Tray(getTrayImage())
 
     const trayMenu = Menu.buildFromTemplate([
       {
