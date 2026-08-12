@@ -1,6 +1,6 @@
 import { execFile, spawn } from 'child_process'
 import { basename, dirname, join } from 'path'
-import { chmodSync, existsSync, mkdirSync, promises as fsPromises, unlinkSync, writeFileSync } from 'fs'
+import { chmodSync, existsSync, mkdirSync, promises as fsPromises, rmdirSync, unlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 
 import { currentPlatform, getAutoMountPoint, getConnectionMountPoint } from '@/platform/index.js'
@@ -436,6 +436,7 @@ class ProcessHandlerLinux {
     for (const command of commands) {
       try {
         await this.execFileQuiet(command.file, command.args)
+        this.cleanupAutoMountDir(mountPoint)
         return
       } catch (error) {
         lastError = error
@@ -443,6 +444,22 @@ class ProcessHandlerLinux {
     }
 
     throw lastError || new Error(`Unable to unmount "${mountPoint}"`)
+  }
+
+  cleanupAutoMountDir (mountPoint) {
+    // Only auto-created mount dirs are removed, and rmdir refuses to delete
+    // anything non-empty, so user data and custom paths are never touched.
+    const autoRoot = currentPlatform.autoMountRoot
+
+    if (!autoRoot || !mountPoint || !String(mountPoint).startsWith(autoRoot + '/')) {
+      return
+    }
+
+    try {
+      rmdirSync(mountPoint)
+    } catch {
+      // Busy or non-empty — leave it alone.
+    }
   }
 
   getUnmountCommands (mountPoint) {
